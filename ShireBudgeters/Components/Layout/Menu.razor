@@ -1,0 +1,15 @@
+﻿@rendermode InteractiveServer
+
+<RadzenHeader>
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+        <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+        <RadzenLabel Text="ShireBudgeters" />
+    </RadzenStack>
+</RadzenHeader>
+<RadzenSidebar @bind-Expanded="@sidebarExpanded" style="margin-top: 50px;">
+    <SideMenu />
+</RadzenSidebar>
+
+@code {
+    bool sidebarExpanded = true;
+}
