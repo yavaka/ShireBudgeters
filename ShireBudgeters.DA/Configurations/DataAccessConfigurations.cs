@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ShireBudgeters.DA.Configurations.Database;
-using ShireBudgeters.DA.Configurations.Options;
 
 namespace ShireBudgeters.DA.Configurations;
 
@@ -38,9 +37,6 @@ public static class DataAccessConfigurations
     /// <returns>The service collection.</returns>
     private static IServiceCollection AddDAOptions(this IServiceCollection services, IConfiguration configuration)
     {
-        // Configure the options for the admin settings
-        services.AddOptions<AdminSettingsOptions>(AdminSettingsOptions.SectionName);
-
         return services;
     }
 }
