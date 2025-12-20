@@ -1,4 +1,4 @@
-using ShireBudgeters.DA.Models;
+using ShireBudgeters.DA.Common.Audit;
 
 namespace ShireBudgeters.DA.Common.Helpers;
 

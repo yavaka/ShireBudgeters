@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using ShireBudgeters.DA.Common.Audit;
 
 namespace ShireBudgeters.DA.Models;
 

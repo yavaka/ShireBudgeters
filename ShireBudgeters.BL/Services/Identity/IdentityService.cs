@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-using ShireBudgeters.BL.Common.Mappings;
 using static ShireBudgeters.Common.DTOs.AuthDTOs;
 using ShireBudgeters.DA.Models;
+using ShireBudgeters.BL.Common.Mappings;
 
 namespace ShireBudgeters.BL.Services.Identity;
 
 internal class IdentityService(
     ILogger<IdentityService> logger,
-    SignInManager<UserModel> signInManager, 
+    SignInManager<UserModel> signInManager,
     UserManager<UserModel> userManager) : IIdentityService
 {
     private readonly ILogger<IdentityService> _logger = logger;
@@ -98,7 +98,7 @@ internal class IdentityService(
         }
 
         // Reset access failed count on successful login
-        await _userManager.AccessFailedAsync(user);
+        await _userManager.ResetAccessFailedCountAsync(user);
 
         // Update last login date
         user.LastLoginDate = DateTime.UtcNow;
@@ -108,4 +108,42 @@ internal class IdentityService(
     }
 
     public async Task LogoutAsync() => await signInManager.SignOutAsync();
+
+    /// <summary>
+    /// Create a new user with the specified password. Used only for initial seeding.
+    /// </summary>
+    public async Task<string> CreateUserWithPasswordAsync(
+        string email,
+        string password,
+        string firstName,
+        string lastName)
+    {
+        var user = new UserModel
+        {
+            UserName = email,
+            Email = email,
+            NormalizedUserName = email.ToUpperInvariant(),
+            NormalizedEmail = email.ToUpperInvariant(),
+            FirstName = firstName,
+            LastName = lastName,
+            IsActive = true,
+            EmailConfirmed = false,
+            CreatedBy = "system",
+            CreatedDate = DateTime.UtcNow,
+            ModifiedBy = "system",
+            ModifiedDate = DateTime.UtcNow
+        };
+
+        // This automatically hashes the password and sets SecurityStamp, ConcurrencyStamp, etc.
+        var result = await _userManager.CreateAsync(user, password);
+
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to create user: {errors}");
+        }
+
+        return user.Id;
+    }
+
 }

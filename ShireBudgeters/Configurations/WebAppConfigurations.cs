@@ -1,16 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Radzen;
 using ShireBudgeters.BL.Configurations;
-using ShireBudgeters.Common.Common.Constants;
 
 namespace ShireBudgeters.Configurations;
 
 public static class WebAppConfigurations
 {
     public static IServiceCollection AddWebAppServices(
-        this IServiceCollection services, 
-        IConfiguration configuration,
-        IWebHostEnvironment environment)
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddRazorComponents()
             .AddInteractiveServerComponents();
@@ -19,7 +17,7 @@ public static class WebAppConfigurations
         services.AddRadzenComponents();
 
         // Business Logic
-        services.AddBusinessLogicServices(configuration, environment.IsProduction());
+        services.AddBusinessLogicServices(configuration);
 
         return services;
     }

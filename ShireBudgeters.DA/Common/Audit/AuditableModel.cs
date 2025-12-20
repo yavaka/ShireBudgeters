@@ -1,4 +1,4 @@
-namespace ShireBudgeters.DA.Models;
+namespace ShireBudgeters.DA.Common.Audit;
 
 /// <summary>
 /// Base class for models that support audit tracking.

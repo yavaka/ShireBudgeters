@@ -1,4 +1,4 @@
-namespace ShireBudgeters.DA.Models;
+namespace ShireBudgeters.DA.Common.Audit;
 
 /// <summary>
 /// Interface for entities that support audit tracking (created/modified by and when).

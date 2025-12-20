@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using ShireBudgeters.BL.Services.Identity;
 using ShireBudgeters.Components;
 using ShireBudgeters.Configurations;
 using ShireBudgeters.DA.Configurations.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
+builder.Services.AddWebAppServices(builder.Configuration);
 
 var app = builder.Build();
 
@@ -13,7 +14,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -21,9 +21,6 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
@@ -33,5 +30,7 @@ app.MapRazorComponents<App>()
 using var scope = app.Services.CreateScope();
 using var context = scope.ServiceProvider.GetRequiredService<ShireBudgetersDbContext>();
 context.Database.Migrate();
+
+app.MapAdditionalIdentityEndpoints();
 
 app.Run();

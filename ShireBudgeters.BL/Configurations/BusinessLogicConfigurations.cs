@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ShireBudgeters.BL.Services.Identity;
-using ShireBudgeters.Common.Common.Constants;
 using ShireBudgeters.DA.Configurations;
 using ShireBudgeters.DA.Configurations.Database;
 using ShireBudgeters.DA.Models;
@@ -12,66 +11,39 @@ namespace ShireBudgeters.BL.Configurations;
 
 public static class BusinessLogicConfigurations
 {
-    public static IServiceCollection AddBusinessLogicServices(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        bool isProduction)
+    public static IServiceCollection AddBusinessLogicServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services
-            .AddDataAccessServices(configuration)
-            .AddAuthNAndAuthZ(isProduction)
+        services.AddDataAccessServices(configuration)
+            .AddAuthNAndAuthZ()
             .AddServices();
 
-
         return services;
     }
 
-    private static IServiceCollection AddAuthNAndAuthZ(this IServiceCollection services, bool isProduction)
+    private static IServiceCollection AddAuthNAndAuthZ(this IServiceCollection services)
     {
-        services.AddAuthentication().AddCookie(options =>
+        services.AddCascadingAuthenticationState();
+        services.AddScoped<IdentityRedirectManager>();
+        services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+
+        services.AddAuthentication(options =>
         {
-            options.Cookie.Name = Identity.CookieName;
-            options.Cookie.HttpOnly = true;
-            options.ExpireTimeSpan = TimeSpan.FromHours(8);
-
-            options.LoginPath = Identity.LoginPath;
-            options.AccessDeniedPath = Identity.AccessDeniedPath;
-            options.SlidingExpiration = true;
-            options.Cookie.SameSite = SameSiteMode.Strict;
-            options.Cookie.SecurePolicy = isProduction
-                ? CookieSecurePolicy.Always
-                : CookieSecurePolicy.SameAsRequest;
-        });
-
-        services.AddAuthorization();
-
-        services.AddIdentityCore<UserModel>(options => { })
-            .AddUserManager<UserManager<UserModel>>()
-            .AddSignInManager<SignInManager<UserModel>>()
-            .AddEntityFrameworkStores<ShireBudgetersDbContext>();
-
-        services.Configure<IdentityOptions>(options =>
+            options.DefaultScheme = IdentityConstants.ApplicationScheme;
+            options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+        })
+            .AddIdentityCookies();
+        
+        services.AddIdentityCore<UserModel>(options =>
         {
-            // Password settings
-            options.Password.RequireDigit = true;
-            options.Password.RequireLowercase = true;
-            options.Password.RequireNonAlphanumeric = true;
-            options.Password.RequireUppercase = true;
-            options.Password.RequiredLength = 12;
-
-            // Lockout settings
-            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-            options.Lockout.MaxFailedAccessAttempts = 5;
-            options.Lockout.AllowedForNewUsers = true;
-
-            // User settings
-            options.User.RequireUniqueEmail = true;
-            options.SignIn.RequireConfirmedEmail = false;
-        });
+            options.SignIn.RequireConfirmedAccount = false;
+            options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+        })
+            .AddEntityFrameworkStores<ShireBudgetersDbContext>()
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
 
         return services;
     }
-
     private static IServiceCollection AddServices(this IServiceCollection services)
         => services.AddScoped<IIdentityService, IdentityService>();
 }
