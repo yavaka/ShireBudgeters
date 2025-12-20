@@ -5,13 +5,21 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <UserSecretsId>666f3797-ef16-4754-a4d4-fe61fc2ec6fd</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Radzen.Blazor" Version="8.4.0" />
   </ItemGroup>
 
   <ItemGroup>
+	  <Content Update="@(Content)">
+		  <Visible Condition="'%(NuGetItemType)' == 'Content'">false</Visible>
+	  </Content>
     <ProjectReference Include="..\ShireBudgeters.BL\ShireBudgeters.BL.csproj" />
     <ProjectReference Include="..\ShireBudgeters.Common\ShireBudgeters.Common.csproj" />
   </ItemGroup>

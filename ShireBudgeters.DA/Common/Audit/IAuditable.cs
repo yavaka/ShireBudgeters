@@ -4,7 +4,7 @@ namespace ShireBudgeters.DA.Models;
 /// Interface for entities that support audit tracking (created/modified by and when).
 /// This interface is specific to the Data Access layer.
 /// </summary>
-public interface IAuditable
+internal interface IAuditable
 {
     /// <summary>
     /// Gets or sets the identifier of the user who created the record.

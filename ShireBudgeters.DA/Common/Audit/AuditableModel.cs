@@ -5,7 +5,7 @@ namespace ShireBudgeters.DA.Models;
 /// Provides default implementation of IAuditable interface.
 /// This base class is specific to the Data Access layer.
 /// </summary>
-public abstract class AuditableModel : IAuditable
+internal abstract class AuditableModel : IAuditable
 {
     /// <summary>
     /// Gets or sets the identifier of the user who created the record.

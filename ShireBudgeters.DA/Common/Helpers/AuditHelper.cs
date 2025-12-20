@@ -1,11 +1,11 @@
 using ShireBudgeters.DA.Models;
 
-namespace ShireBudgeters.DA.Helpers;
+namespace ShireBudgeters.DA.Common.Helpers;
 
 /// <summary>
 /// Helper class for setting audit properties on entities.
 /// </summary>
-public static class AuditHelper
+internal static class AuditHelper
 {
     /// <summary>
     /// Sets the audit properties for a newly created entity.
