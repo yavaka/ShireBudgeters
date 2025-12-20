@@ -2,11 +2,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ShireBudgeters.BL.Services.Identity;
 using ShireBudgeters.Common.Common.Constants;
 using ShireBudgeters.DA.Configurations;
 using ShireBudgeters.DA.Configurations.Database;
 using ShireBudgeters.DA.Models;
-using System;
 
 namespace ShireBudgeters.BL.Configurations;
 
@@ -17,8 +17,12 @@ public static class BusinessLogicConfigurations
         IConfiguration configuration,
         bool isProduction)
     {
-        services.AddDataAccessServices(configuration);
-        services.AddAuthNAndAuthZ(isProduction);
+        services
+            .AddDataAccessServices(configuration)
+            .AddAuthNAndAuthZ(isProduction)
+            .AddServices();
+
+
         return services;
     }
 
@@ -67,4 +71,7 @@ public static class BusinessLogicConfigurations
 
         return services;
     }
+
+    private static IServiceCollection AddServices(this IServiceCollection services)
+        => services.AddScoped<IIdentityService, IdentityService>();
 }
