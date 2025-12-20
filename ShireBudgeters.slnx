@@ -1,3 +1,9 @@
 <Solution>
-  <Project Path="ShireBudgeters/ShireBudgeters.csproj" />
+  <Folder Name="/src/">
+    <Project Path="ShireBudgeters.BL/ShireBudgeters.BL.csproj" Id="f149f39d-65e0-4c32-a231-44ab5dbefd56" />
+    <Project Path="ShireBudgeters.Common/ShireBudgeters.Common.csproj" Id="6a465f90-e4a0-4eb4-92f2-9806c3af7274" />
+    <Project Path="ShireBudgeters.DA/ShireBudgeters.DA.csproj" Id="87b04775-3061-4313-a711-58ebf43bbd59" />
+    <Project Path="ShireBudgeters/ShireBudgeters.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
 </Solution>

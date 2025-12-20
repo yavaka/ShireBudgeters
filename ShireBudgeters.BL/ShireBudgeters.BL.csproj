@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.1" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Configurations\Options\" />
+	  <Folder Include="Services\" />
+	  <Folder Include="ServiceModels\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\ShireBudgeters.Common\ShireBudgeters.Common.csproj" />
+	  <ProjectReference Include="..\ShireBudgeters.DA\ShireBudgeters.DA.csproj" />
+	</ItemGroup>
+
+</Project>

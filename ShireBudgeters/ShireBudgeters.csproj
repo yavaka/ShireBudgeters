@@ -11,4 +11,9 @@
     <PackageReference Include="Radzen.Blazor" Version="8.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ShireBudgeters.BL\ShireBudgeters.BL.csproj" />
+    <ProjectReference Include="..\ShireBudgeters.Common\ShireBudgeters.Common.csproj" />
+  </ItemGroup>
+
 </Project>
