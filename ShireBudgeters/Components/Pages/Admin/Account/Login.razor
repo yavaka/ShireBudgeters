@@ -12,49 +12,67 @@
 
 <PageTitle>Log in</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-lg-6">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="Input.Password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <hr />
-                <div class="d-flex flex-column">
-                    <span class="text-secondary mx-auto mt-2">OR</span>
-                </div>
-                <hr />
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                </div>
-            </EditForm>
-        </section>
-    </div>
-</div>
+<RadzenRow JustifyContent="JustifyContent.Center" class="rz-mt-5">
+    <RadzenColumn Size="12" SizeMD="8" SizeLG="6" SizeXL="4">
+        <RadzenCard class="rz-shadow-3">
+            <RadzenStack Gap="1.5rem">
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H3" class="rz-text-center">Log in</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-text-center rz-text-secondary">
+                        Use a local account to log in.
+                    </RadzenText>
+                </RadzenStack>
+
+                <StatusMessage Message="@errorMessage" />
+
+                <EditForm EditContext="editContext" method="post" OnValidSubmit="LoginUser" FormName="login">
+                    <DataAnnotationsValidator />
+                    <div class="rz-form" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <InputText @bind-Value="Input.Email"
+                                       id="email"
+                                       Placeholder="name@example.com"
+                                       autocomplete="username webauthn"
+                                       class="form-control rz-w-100"
+                                       style="width: 100%;" />
+                            <ValidationMessage For="() => Input.Email" class="rz-form-field-error" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <InputText @bind-Value="Input.Password"
+                                       type="password"
+                                       id="password"
+                                       Placeholder="Enter your password"
+                                       autocomplete="current-password"
+                                       class="form-control rz-w-100"
+                                       style="width: 100%;" />
+                            <ValidationMessage For="() => Input.Password" class="rz-form-field-error" />
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <InputCheckbox @bind-Value="Input.RememberMe" id="rememberMe" class="rz-checkbox" />
+                            <label for="rememberMe" class="rz-text-body-2" style="cursor: pointer; margin: 0;">Remember me</label>
+                        </div>
+
+                        <button type="submit"
+                                class="rz-button rz-button-md rz-button-primary rz-button-flat rz-w-100"
+                                style="width: 100%;">
+                            Log in
+                        </button>
+
+                        <hr style="margin: 1rem 0; border-color: var(--rz-base-300);" />
+
+                        <div style="display: flex; justify-content: center;">
+                            <a href="Account/ForgotPassword" class="rz-link rz-text-body-2 rz-text-secondary">Forgot your password?</a>
+                        </div>
+                    </div>
+                </EditForm>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
 
 @code {
     private string? errorMessage;
@@ -84,18 +102,13 @@
 
     public async Task LoginUser()
     {
-        if (!editContext.Validate())
-        {
-            return;
-        }
-
         var result = await IdentityService.LoginAsync(new LoginRequestDTO()
         {
             Email = Input.Email,
             Password = Input.Password,
             RememberMe = Input.RememberMe,
         });
-        
+
         if (result.Success)
         {
             RedirectManager.RedirectTo("admin/dashboard");
