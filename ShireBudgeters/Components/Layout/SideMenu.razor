@@ -37,16 +37,8 @@
 <RadzenPanelMenu>
     <AuthorizeView>
         <Authorized>
-            <RadzenPanelMenuItem Text="Dashboard" Path="Admin/Dashboard"/>
-            <RadzenPanelMenuItem Text="Logout">
-                <form action="Account/Logout" method="post">
-                    <AntiforgeryToken />
-                    <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                    <button type="submit" class="nav-link">
-                        <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                    </button>
-                </form>
-            </RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Dashboard" Path="Admin/Dashboard" Icon="dashboard"/>
+            <RadzenPanelMenuItem Text="Logout" Click="@(_ => NavigationManager.NavigateTo("/Account/Logout", forceLoad: true))" Icon="logout"></RadzenPanelMenuItem>
         </Authorized>
         <NotAuthorized>
             <RadzenPanelMenuItem Text="Login" Path="Account/Login" Icon="login" />  
@@ -55,6 +47,7 @@
 </RadzenPanelMenu>
 
 @code {
+
     private string? currentUrl;
 
     protected override void OnInitialized()
