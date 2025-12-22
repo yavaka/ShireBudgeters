@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ShireBudgeters.BL.Services.Identity;
+using ShireBudgeters.Common.Middleware;
 using ShireBudgeters.Components;
 using ShireBudgeters.Configurations;
 using ShireBudgeters.DA.Configurations.Database;
@@ -21,10 +22,20 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    // HSTS: Force HTTPS for 1 year in production
     app.UseHsts();
 }
 
+// Add security headers middleware early in the pipeline
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
+// Add IP address logging middleware early in the pipeline
+app.UseMiddleware<IpAddressLoggingMiddleware>();
+
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
+// HTTPS Redirection - redirects HTTP to HTTPS
+// In production, this enforces HTTPS for all requests
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();

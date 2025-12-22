@@ -102,11 +102,12 @@ internal class IdentityService(
         #endregion
 
         // PasswordSignInAsync will handle password validation, failed attempts, and lockout
+        // lockoutOnFailure: true enables automatic lockout after MaxFailedAccessAttempts
         var result = await signInManager.PasswordSignInAsync(
             request.Email,
             request.Password,
             isPersistent: request.RememberMe,
-            lockoutOnFailure: false);
+            lockoutOnFailure: true);
 
         if (result.Succeeded is false)
         {
