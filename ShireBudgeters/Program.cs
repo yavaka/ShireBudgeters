@@ -1,10 +1,17 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using ShireBudgeters.BL.Services.Identity;
 using ShireBudgeters.Components;
 using ShireBudgeters.Configurations;
 using ShireBudgeters.DA.Configurations.Database;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext());
 
 builder.Services.AddWebAppServices(builder.Configuration);
 
