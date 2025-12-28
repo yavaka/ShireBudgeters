@@ -6,5 +6,4 @@
     <Project Path="ShireBudgeters/ShireBudgeters.csproj" />
   </Folder>
   <Folder Name="/tests/" />
-  <Project Path="BlazorApp1/BlazorApp1.csproj" Id="668f31fe-55fc-4cb4-aec2-4ee686518ed2" />
 </Solution>

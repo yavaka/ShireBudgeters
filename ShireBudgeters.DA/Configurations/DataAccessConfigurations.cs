@@ -21,10 +21,21 @@ public static class DataAccessConfigurations
         services.AddDAOptions(configuration);
 
         // Configure the DbContext with SQL Server provider
-        services.AddDbContext<ShireBudgetersDbContext>(options 
-            => options.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection") 
-                    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.")));
+        services.AddDbContext<ShireBudgetersDbContext>(options =>
+        {
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection")
+                    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found."),
+                sqlOptions => sqlOptions.MigrationsAssembly(typeof(ShireBudgetersDbContext).Assembly.FullName));
+
+            if (configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") == "Development")
+            {
+                // Enable sensitive data logging only in development
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
+            }
+        });
+
 
         return services;
     }

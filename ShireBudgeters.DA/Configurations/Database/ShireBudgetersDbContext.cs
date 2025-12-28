@@ -10,10 +10,13 @@ namespace ShireBudgeters.DA.Configurations.Database;
 /// </summary>
 public class ShireBudgetersDbContext(DbContextOptions<ShireBudgetersDbContext> options) : IdentityDbContext<UserModel>(options)
 {
+    public DbSet<CategoryModel> Categories { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         new UserEntityTypeConfiguration().Configure(modelBuilder.Entity<UserModel>());
+        new CategoryEntityTypeConfiguration().Configure(modelBuilder.Entity<CategoryModel>());
     }
 }

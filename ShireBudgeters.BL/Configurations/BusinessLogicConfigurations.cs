@@ -106,6 +106,7 @@ public static class BusinessLogicConfigurations
 
         return services;
     }
+
     private static IServiceCollection AddServices(this IServiceCollection services)
         => services.AddScoped<IIdentityService, IdentityService>();
 }
