@@ -1,7 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ShireBudgeters.Common;
 using ShireBudgeters.DA.Configurations.Database;
+using ShireBudgeters.DA.Models;
+using ShireBudgeters.DA.Repositories;
+using ShireBudgeters.DA.Repositories.Category;
 
 namespace ShireBudgeters.DA.Configurations;
 
@@ -36,7 +40,6 @@ public static class DataAccessConfigurations
             }
         });
 
-
         return services;
     }
 
@@ -46,8 +49,7 @@ public static class DataAccessConfigurations
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">The configuration.</param>
     /// <returns>The service collection.</returns>
-    private static IServiceCollection AddDAOptions(this IServiceCollection services, IConfiguration configuration)
-    {
-        return services;
-    }
+    private static IServiceCollection AddDAOptions(this IServiceCollection services, IConfiguration configuration) 
+        => services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>))
+                   .AddScoped<ICategoryRepository, CategoryRepository>();
 }
