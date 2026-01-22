@@ -1,14 +1,11 @@
-﻿using ShireBudgeters.DA.Common.Audit;
-
-namespace ShireBudgeters.DA.Models;
+﻿namespace ShireBudgeters.Common.DTOs;
 
 /// <summary>
-/// Represents a category that can be organized hierarchically and associated with a user.
+/// Data Transfer Object for category information.
 /// </summary>
-/// <remarks>A category can have a parent category and multiple child categories, enabling hierarchical
-/// organization. Each category is owned by a user and may include additional metadata such as a description or color.
-/// Inherits audit properties from AuditableModel.</remarks>
-public class CategoryModel : AuditableModel
+/// <remarks>Represents a category that can be organized hierarchically and associated with a user.
+/// Includes all category properties and audit information for data transfer between layers.</remarks>
+public class CategoryDTO
 {
     /// <summary>
     /// Gets or sets the unique identifier for the category.
@@ -45,20 +42,23 @@ public class CategoryModel : AuditableModel
     /// </summary>
     public bool IsActive { get; set; } = true;
 
-    // Navigation Properties
+    /// <summary>
+    /// Gets or sets the identifier of the user who created the record.
+    /// </summary>
+    public string? CreatedBy { get; set; }
 
     /// <summary>
-    /// Gets or sets the user who owns this category.
+    /// Gets or sets the date and time when the record was created.
     /// </summary>
-    public virtual UserModel? User { get; set; }
+    public DateTime CreatedDate { get; set; }
 
     /// <summary>
-    /// Gets or sets the parent category.
+    /// Gets or sets the identifier of the user who last modified the record.
     /// </summary>
-    public virtual CategoryModel? ParentCategory { get; set; }
+    public string? ModifiedBy { get; set; }
 
     /// <summary>
-    /// Gets or sets the child categories.
+    /// Gets or sets the date and time when the record was last modified.
     /// </summary>
-    public virtual ICollection<CategoryModel> ChildCategories { get; set; } = new List<CategoryModel>();
+    public DateTime? ModifiedDate { get; set; }
 }

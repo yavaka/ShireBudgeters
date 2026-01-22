@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ShireBudgeters.BL.Services.Category;
 using ShireBudgeters.BL.Services.Identity;
 using ShireBudgeters.DA.Configurations;
 using ShireBudgeters.DA.Configurations.Database;
 using ShireBudgeters.DA.Models;
+using ShireBudgeters.DA.Repositories.Category;
 
 namespace ShireBudgeters.BL.Configurations;
 
@@ -108,5 +110,6 @@ public static class BusinessLogicConfigurations
     }
 
     private static IServiceCollection AddServices(this IServiceCollection services)
-        => services.AddScoped<IIdentityService, IdentityService>();
+        => services.AddScoped<IIdentityService, IdentityService>()
+                   .AddScoped<ICategoryService, CategoryService>();
 }
