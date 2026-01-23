@@ -10,7 +10,7 @@ namespace ShireBudgeters.DA.Repositories;
 /// </summary>
 /// <typeparam name="T">The entity type.</typeparam>
 /// <typeparam name="TKey">The type of the entity's primary key.</typeparam>
-/// <remarks>
+/// <remarks>   
 /// Initializes a new instance of the <see cref="Repository{T, TKey}"/> class.
 /// </remarks>
 public class Repository<T, TKey>(ShireBudgetersDbContext context) : IRepository<T, TKey> where T : class

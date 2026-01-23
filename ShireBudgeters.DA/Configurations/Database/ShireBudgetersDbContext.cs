@@ -12,11 +12,14 @@ public class ShireBudgetersDbContext(DbContextOptions<ShireBudgetersDbContext> o
 {
     public DbSet<CategoryModel> Categories { get; set; }
 
+    public DbSet<PostModel> BlogPosts { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         new UserEntityTypeConfiguration().Configure(modelBuilder.Entity<UserModel>());
         new CategoryEntityTypeConfiguration().Configure(modelBuilder.Entity<CategoryModel>());
+        new PostEntityTypeConfiguration().Configure(modelBuilder.Entity<PostModel>());
     }
 }
