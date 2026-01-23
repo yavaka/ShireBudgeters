@@ -70,7 +70,7 @@ internal class PostEntityTypeConfiguration : IEntityTypeConfiguration<PostModel>
         builder.HasOne(e => e.Category)
             .WithMany()
             .HasForeignKey(e => e.CategoryId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
 
         // Configure indexes
         builder.HasIndex(e => e.AuthorId)

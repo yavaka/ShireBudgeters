@@ -6,6 +6,7 @@ using ShireBudgeters.DA.Configurations.Database;
 using ShireBudgeters.DA.Models;
 using ShireBudgeters.DA.Repositories;
 using ShireBudgeters.DA.Repositories.Category;
+using ShireBudgeters.DA.Repositories.Post;
 
 namespace ShireBudgeters.DA.Configurations;
 
@@ -51,5 +52,6 @@ public static class DataAccessConfigurations
     /// <returns>The service collection.</returns>
     private static IServiceCollection AddDAOptions(this IServiceCollection services, IConfiguration configuration) 
         => services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>))
-                   .AddScoped<ICategoryRepository, CategoryRepository>();
+                   .AddScoped<ICategoryRepository, CategoryRepository>()
+                   .AddScoped<IPostRepository, PostRepository>();
 }

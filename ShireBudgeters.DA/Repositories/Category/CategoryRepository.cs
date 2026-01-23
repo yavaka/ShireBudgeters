@@ -4,6 +4,12 @@ using ShireBudgeters.DA.Models;
 
 namespace ShireBudgeters.DA.Repositories.Category;
 
+/// <summary>
+/// Repository implementation for category data access operations.
+/// </summary>
+/// <remarks>Provides data access methods for querying and managing categories using Entity Framework Core.
+/// All read operations use AsNoTracking() for performance optimization. Supports hierarchical category structures
+/// with parent-child relationships.</remarks>
 internal class CategoryRepository(ShireBudgetersDbContext context) : Repository<CategoryModel, int>(context), ICategoryRepository
 {
     /// <inheritdoc/>
@@ -11,9 +17,10 @@ internal class CategoryRepository(ShireBudgetersDbContext context) : Repository<
     {
         return await _dbSet
             .AsNoTracking()
-            .Where(c => c.UserId == userId)
             .Include(c => c.ParentCategory)
             .Include(c => c.ChildCategories)
+            .Where(c => c.UserId == userId)
+            .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
 
@@ -22,8 +29,9 @@ internal class CategoryRepository(ShireBudgetersDbContext context) : Repository<
     {
         return await _dbSet
             .AsNoTracking()
-            .Where(c => c.UserId == userId && c.IsActive)
             .Include(c => c.ParentCategory)
+            .Where(c => c.UserId == userId && c.IsActive)
+            .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
 
@@ -32,8 +40,9 @@ internal class CategoryRepository(ShireBudgetersDbContext context) : Repository<
     {
         return await _dbSet
             .AsNoTracking()
-            .Where(c => c.UserId == userId && c.ParentCategoryId == null)
             .Include(c => c.ChildCategories)
+            .Where(c => c.UserId == userId && c.ParentCategoryId == null)
+            .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
 
@@ -43,6 +52,7 @@ internal class CategoryRepository(ShireBudgetersDbContext context) : Repository<
         return await _dbSet
             .AsNoTracking()
             .Where(c => c.ParentCategoryId == parentCategoryId)
+            .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
 

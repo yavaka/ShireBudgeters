@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShireBudgeters.DA.Configurations.Database;
 
@@ -11,9 +12,11 @@ using ShireBudgeters.DA.Configurations.Database;
 namespace ShireBudgeters.DA.Migrations
 {
     [DbContext(typeof(ShireBudgetersDbContext))]
-    partial class ShireBudgetersDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260123163210_AddPostTable")]
+    partial class AddPostTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
