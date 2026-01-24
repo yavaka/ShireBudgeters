@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ShireBudgeters.BL.Services.Category;
 using ShireBudgeters.BL.Services.Identity;
+using ShireBudgeters.BL.Services.LeadMagnet;
 using ShireBudgeters.BL.Services.Post;
 using ShireBudgeters.DA.Configurations;
 using ShireBudgeters.DA.Configurations.Database;
@@ -113,5 +114,6 @@ public static class BusinessLogicConfigurations
     private static IServiceCollection AddServices(this IServiceCollection services)
         => services.AddScoped<IIdentityService, IdentityService>()
                    .AddScoped<ICategoryService, CategoryService>()
-                   .AddScoped<IPostService, PostService>();
+                   .AddScoped<IPostService, PostService>()
+                   .AddScoped<ILeadMagnetService, LeadMagnetService>();
 }
