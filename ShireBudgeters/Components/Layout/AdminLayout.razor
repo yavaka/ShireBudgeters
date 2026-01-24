@@ -1,0 +1,47 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using ShireBudgeters.BL.Services.Identity
+@using static ShireBudgeters.Common.DTOs.AuthDTOs
+
+@inherits LayoutComponentBase
+
+@attribute [Authorize]
+
+@inject IIdentityService IdentityService
+@inject NavigationManager NavigationManager
+
+<RadzenLayout>
+    <AdminMenu />
+    <RadzenBody Style="margin-top: 50px;">
+        <CascadingValue TValue="UserInfoDTO" Value="_currentUser">
+            @Body
+        </CascadingValue>
+    </RadzenBody>
+    <RadzenFooter>
+        Copyright © @(DateTime.Now.Date.Year) - ShireBudgeters
+    </RadzenFooter>
+</RadzenLayout>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+<RadzenComponents @rendermode="InteractiveServer" />
+
+@code{
+    private UserInfoDTO _currentUser = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var currentUser = await IdentityService.GetCurrentUserAsync();
+        if (currentUser is null)
+        {
+            NavigationManager.NavigateTo("/Account/Login", forceLoad: true);
+        }
+
+        _currentUser = currentUser!;
+    }
+}

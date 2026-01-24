@@ -1,10 +1,13 @@
 ﻿@page "/admin/dashboard"
 @using Microsoft.AspNetCore.Authorization
 
+@layout AdminLayout
+
 @attribute [Authorize]
 
 @rendermode InteractiveServer
 
+<PageTitle>Admin Dashboard</PageTitle>
+
 <h3>Dashboard</h3>
 
-<p>Greetings from YAVAKA for RUMBAKA!</p>
