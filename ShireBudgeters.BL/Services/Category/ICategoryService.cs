@@ -45,7 +45,10 @@ public interface ICategoryService
     /// <summary>
     /// Deletes a category permanently.
     /// </summary>
-    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
+    /// <param name="id">The identifier of the category to delete.</param>
+    /// <param name="userId">Optional user identifier. If provided, verifies ownership before deletion.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    Task DeleteAsync(int id, string? userId = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Soft deletes a category by setting IsActive to false.

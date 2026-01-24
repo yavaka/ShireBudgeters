@@ -1,4 +1,5 @@
-﻿using ShireBudgeters.BL.Common.Mappings;
+﻿using ShireBudgeters.BL.Common.Helpers;
+using ShireBudgeters.BL.Common.Mappings;
 using ShireBudgeters.Common.DTOs;
 using ShireBudgeters.DA.Repositories.Category;
 
@@ -49,29 +50,50 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
     /// <inheritdoc/>
     public async Task<CategoryDTO> CreateAsync(CategoryDTO categoryDto, string? userId, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(categoryDto.Name))
+        // Validate and sanitize name
+        CategoryValidationHelper.ValidateName(categoryDto.Name);
+        categoryDto.Name = CategoryValidationHelper.SanitizeName(categoryDto.Name);
+
+        // Validate description
+        CategoryValidationHelper.ValidateDescription(categoryDto.Description);
+        if (!string.IsNullOrWhiteSpace(categoryDto.Description))
         {
-            throw new ArgumentException("Category name is required.", nameof(categoryDto));
+            categoryDto.Description = CategoryValidationHelper.SanitizeDescription(categoryDto.Description);
         }
 
-        if (string.IsNullOrWhiteSpace(categoryDto.UserId))
+        // Validate color
+        CategoryValidationHelper.ValidateColorLength(categoryDto.Color);
+        if (!string.IsNullOrWhiteSpace(categoryDto.Color))
         {
-            throw new ArgumentException("UserId is required.", nameof(categoryDto));
+            if (!CategoryValidationHelper.IsValidColorFormat(categoryDto.Color))
+            {
+                throw new ArgumentException("Category color must be a valid hex color (#FF0000, #fff) or CSS color name.", nameof(categoryDto));
+            }
+        }
+
+        // Validate UserId
+        CategoryValidationHelper.ValidateUserId(categoryDto.UserId);
+
+        // Security check: UserId must match userId
+        if (categoryDto.UserId != userId)
+        {
+            throw new UnauthorizedAccessException("UserId must match the authenticated user.");
         }
 
         // Validate parent category if specified
         if (categoryDto.ParentCategoryId.HasValue)
         {
+            // Note: For new categories (Id = 0), self-reference check is not needed
+            // But we still validate parent category exists and belongs to the user
+
             var parentCategory = await _categoryRepository.GetByIdAsync(categoryDto.ParentCategoryId.Value, cancellationToken);
             if (parentCategory == null)
             {
                 throw new ArgumentException("Parent category not found.", nameof(categoryDto));
             }
 
-            if (parentCategory.UserId != categoryDto.UserId)
-            {
-                throw new UnauthorizedAccessException("Parent category does not belong to the same user.");
-            }
+            // Validate parent category ownership
+            CategoryValidationHelper.ValidateOwnershipOrThrow(parentCategory.UserId, categoryDto.UserId);
         }
 
         var category = categoryDto.ToCategoryModel();
@@ -89,20 +111,36 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
     /// <inheritdoc/>
     public async Task<CategoryDTO> UpdateAsync(CategoryDTO categoryDto, string? userId, CancellationToken cancellationToken = default)
     {
+        // Validate ID
         if (categoryDto.Id <= 0)
         {
             throw new ArgumentException("Category ID is required for update.", nameof(categoryDto));
         }
 
-        if (string.IsNullOrWhiteSpace(categoryDto.Name))
+        // Validate and sanitize name
+        CategoryValidationHelper.ValidateName(categoryDto.Name);
+        var sanitizedName = CategoryValidationHelper.SanitizeName(categoryDto.Name);
+
+        // Validate description
+        CategoryValidationHelper.ValidateDescription(categoryDto.Description);
+        string? sanitizedDescription = null;
+        if (!string.IsNullOrWhiteSpace(categoryDto.Description))
         {
-            throw new ArgumentException("Category name is required.", nameof(categoryDto));
+            sanitizedDescription = CategoryValidationHelper.SanitizeDescription(categoryDto.Description);
         }
 
-        if (string.IsNullOrWhiteSpace(categoryDto.UserId))
+        // Validate color
+        CategoryValidationHelper.ValidateColorLength(categoryDto.Color);
+        if (!string.IsNullOrWhiteSpace(categoryDto.Color))
         {
-            throw new ArgumentException("UserId is required.", nameof(categoryDto));
+            if (!CategoryValidationHelper.IsValidColorFormat(categoryDto.Color))
+            {
+                throw new ArgumentException("Category color must be a valid hex color (#FF0000, #fff) or CSS color name.", nameof(categoryDto));
+            }
         }
+
+        // Validate UserId
+        CategoryValidationHelper.ValidateUserId(categoryDto.UserId);
 
         var existingCategory = await _categoryRepository.GetByIdAsync(categoryDto.Id, cancellationToken);
         if (existingCategory == null)
@@ -111,19 +149,19 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
         }
 
         // Verify ownership
-        if (existingCategory.UserId != categoryDto.UserId)
+        CategoryValidationHelper.ValidateOwnershipOrThrow(existingCategory.UserId, categoryDto.UserId);
+
+        // Security check: UserId must match userId
+        if (existingCategory.UserId != userId)
         {
-            throw new UnauthorizedAccessException("Category does not belong to the specified user.");
+            throw new UnauthorizedAccessException("Category does not belong to the authenticated user.");
         }
 
         // Validate parent category if specified
         if (categoryDto.ParentCategoryId.HasValue)
         {
-            // Prevent circular reference - check if the parent is a child of this category
-            if (categoryDto.ParentCategoryId.Value == categoryDto.Id)
-            {
-                throw new ArgumentException("A category cannot be its own parent.", nameof(categoryDto));
-            }
+            // Prevent self-reference
+            CategoryValidationHelper.ValidateParentCategory(categoryDto.Id, categoryDto.ParentCategoryId);
 
             var parentCategory = await _categoryRepository.GetByIdAsync(categoryDto.ParentCategoryId.Value, cancellationToken);
             if (parentCategory == null)
@@ -131,10 +169,8 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
                 throw new ArgumentException("Parent category not found.", nameof(categoryDto));
             }
 
-            if (parentCategory.UserId != categoryDto.UserId)
-            {
-                throw new UnauthorizedAccessException("Parent category does not belong to the same user.");
-            }
+            // Validate parent category ownership
+            CategoryValidationHelper.ValidateOwnershipOrThrow(parentCategory.UserId, categoryDto.UserId);
 
             // Check for circular reference by checking if any child is the parent
             var childCategories = await _categoryRepository.GetChildCategoriesAsync(categoryDto.Id, cancellationToken);
@@ -145,8 +181,8 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
         }
 
         // Update properties
-        existingCategory.Name = categoryDto.Name;
-        existingCategory.Description = categoryDto.Description;
+        existingCategory.Name = sanitizedName;
+        existingCategory.Description = sanitizedDescription;
         existingCategory.Color = categoryDto.Color;
         existingCategory.ParentCategoryId = categoryDto.ParentCategoryId;
         existingCategory.IsActive = categoryDto.IsActive;
@@ -160,12 +196,18 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
     }
 
     /// <inheritdoc/>
-    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(int id, string? userId = null, CancellationToken cancellationToken = default)
     {
         var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
         if (category == null)
         {
             throw new KeyNotFoundException($"Category with ID {id} not found.");
+        }
+
+        // Verify ownership if userId is provided
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            CategoryValidationHelper.ValidateOwnershipOrThrow(category.UserId, userId);
         }
 
         // Check if category has children
