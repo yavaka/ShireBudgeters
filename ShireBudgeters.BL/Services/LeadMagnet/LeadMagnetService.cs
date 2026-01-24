@@ -36,7 +36,7 @@ internal class LeadMagnetService(ILeadMagnetRepository leadMagnetRepository, ICa
         LeadMagnetValidationHelper.ValidateCategoryId(categoryId);
         
         var leadMagnets = await _leadMagnetRepository.GetActiveByCategoryIdAsync(categoryId, cancellationToken);
-        return leadMagnets.Select(lm => lm.ToLeadMagnetDTO());
+         return leadMagnets.Select(lm => lm.ToLeadMagnetDTO());
     }
 
     /// <inheritdoc/>

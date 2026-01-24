@@ -45,9 +45,21 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 // Apply any pending migrations at startup
-using var scope = app.Services.CreateScope();
-using var context = scope.ServiceProvider.GetRequiredService<ShireBudgetersDbContext>();
-context.Database.Migrate();
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ShireBudgetersDbContext>();
+    context.Database.Migrate();
+
+    // Seed the database if configured
+    var seedDatabase = app.Configuration.GetValue<bool>("DatabaseSeeder:Enabled", defaultValue: false);
+    var seedSampleData = app.Configuration.GetValue<bool>("DatabaseSeeder:SeedSampleData", defaultValue: false);
+
+    if (seedDatabase)
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<ShireBudgeters.DA.Configurations.Database.DatabaseSeeder>();
+        await seeder.SeedAsync(seedSampleData);
+    }
+}
 
 app.MapAdditionalIdentityEndpoints();
 

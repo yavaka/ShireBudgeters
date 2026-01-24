@@ -42,6 +42,9 @@ public static class DataAccessConfigurations
             }
         });
 
+        // Register database seeder
+        services.AddScoped<Database.DatabaseSeeder>();
+
         return services;
     }
 
