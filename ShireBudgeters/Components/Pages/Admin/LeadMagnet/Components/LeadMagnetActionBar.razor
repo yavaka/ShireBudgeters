@@ -1,0 +1,33 @@
+<RadzenCard>
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem" class="rz-mb-3" AlignItems="AlignItems.Center">
+        <RadzenButton Text="Create"
+                      Icon="add"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@(async _ => await OnCreate.InvokeAsync())" />
+        <RadzenFormField Text="Search" Variant="Variant.Outlined" Style="flex: 1; max-width: 400px;">
+            <Start>
+                <RadzenIcon Icon="search" />
+            </Start>
+            <ChildContent>
+                <RadzenTextBox @bind-Value="@_searchValue"
+                               Placeholder="Search lead magnets..."
+                               Change="@HandleSearchChange" />
+            </ChildContent>
+        </RadzenFormField>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public EventCallback OnCreate { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<string> OnSearch { get; set; } = default!;
+
+    private string _searchValue = string.Empty;
+
+    private async Task HandleSearchChange()
+    {
+        await OnSearch.InvokeAsync(_searchValue);
+    }
+}

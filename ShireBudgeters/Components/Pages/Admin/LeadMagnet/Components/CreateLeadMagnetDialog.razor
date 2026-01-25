@@ -1,0 +1,128 @@
+@using LeadMagnetConstants = ShireBudgeters.Common.Common.Constants.LeadMagnet
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.LeadMagnet
+@inject ILeadMagnetService LeadMagnetService
+@inject DialogService DialogService
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    <EditForm Model="@_leadMagnetDto" OnSubmit="@OnSubmit">
+        <LeadMagnetInformationFormFields LeadMagnet="@_leadMagnetDto"
+                                         AvailableCategories="@_availableCategories" />
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" class="rz-mt-3">
+            <RadzenButton Text="Cancel"
+                          ButtonStyle="ButtonStyle.Light"
+                          Click="@HandleCancel" />
+            <RadzenButton Text="Create"
+                          ButtonType="ButtonType.Submit"
+                          ButtonStyle="ButtonStyle.Primary"
+                          IsBusy="@_isSaving" />
+        </RadzenStack>
+    </EditForm>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = default!;
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+
+    private LeadMagnetDTO _leadMagnetDto = new()
+    {
+        Title = string.Empty,
+        CategoryId = 0,
+        FormActionUrl = null,
+        DownloadFileUrl = null,
+        IsActive = true
+    };
+
+    private bool _isSaving = false;
+    private IEnumerable<CategoryDTO> _availableCategories = new List<CategoryDTO>();
+
+    protected override void OnParametersSet()
+    {
+        _availableCategories = AvailableCategories.Where(c => c.IsActive).ToList();
+
+        var defaultCategoryId = _availableCategories.FirstOrDefault()?.Id ?? 0;
+
+        // Reset form when dialog is opened/reopened
+        _leadMagnetDto = new()
+        {
+            Title = string.Empty,
+            CategoryId = defaultCategoryId,
+            FormActionUrl = null,
+            DownloadFileUrl = null,
+            IsActive = true
+        };
+    }
+
+    private void HandleCancel()
+    {
+        DialogService.Close();
+    }
+
+    private async Task OnSubmit(EditContext editContext)
+    {
+        if (string.IsNullOrWhiteSpace(_leadMagnetDto.Title))
+        {
+            await DialogService.Alert("Title is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (_leadMagnetDto.Title.Length > LeadMagnetConstants.TitleMaxLength)
+        {
+            await DialogService.Alert($"Title cannot exceed {LeadMagnetConstants.TitleMaxLength} characters.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (_leadMagnetDto.CategoryId <= 0)
+        {
+            await DialogService.Alert("Category is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (!IsValidOptionalHttpUrl(_leadMagnetDto.FormActionUrl))
+        {
+            await DialogService.Alert("Form Action URL must be a valid absolute URL (http:// or https://).", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (!IsValidOptionalHttpUrl(_leadMagnetDto.DownloadFileUrl))
+        {
+            await DialogService.Alert("Download File URL must be a valid absolute URL (http:// or https://).", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var createdLeadMagnet = await LeadMagnetService.CreateAsync(_leadMagnetDto, UserId);
+            DialogService.Close(createdLeadMagnet);
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Creating Lead Magnet", new AlertOptions { OkButtonText = "OK" });
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private static bool IsValidOptionalHttpUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return true;
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed))
+        {
+            return false;
+        }
+
+        return parsed.Scheme is "http" or "https";
+    }
+}
+

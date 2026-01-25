@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ShireBudgeters.DA.Configurations.Database;
 using ShireBudgeters.DA.Models;
 
@@ -11,6 +11,24 @@ namespace ShireBudgeters.DA.Repositories.LeadMagnet;
 /// All read operations use AsNoTracking() for performance optimization.</remarks>
 internal class LeadMagnetRepository(ShireBudgetersDbContext context) : Repository<LeadMagnetModel, int>(context), ILeadMagnetRepository
 {
+    /// <inheritdoc/>
+    public async Task<IEnumerable<LeadMagnetModel>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .AsNoTracking()
+            .Include(lm => lm.Category)
+            .Where(lm => lm.Category != null && lm.Category.UserId == userId)
+            .OrderBy(lm => lm.Title)
+            .ToListAsync(cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<LeadMagnetModel>> GetActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        => await _dbSet
+            .AsNoTracking()
+            .Include(lm => lm.Category)
+            .Where(lm => lm.Category != null && lm.Category.UserId == userId && lm.IsActive)
+            .OrderBy(lm => lm.Title)
+            .ToListAsync(cancellationToken);
+
     /// <inheritdoc/>
     public override async Task<LeadMagnetModel?> GetByIdAsync(int id, CancellationToken cancellationToken = default) 
         => await _dbSet

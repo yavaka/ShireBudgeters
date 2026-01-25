@@ -1,0 +1,150 @@
+@using LeadMagnetConstants = ShireBudgeters.Common.Common.Constants.LeadMagnet
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.LeadMagnet
+@inject ILeadMagnetService LeadMagnetService
+@inject DialogService DialogService
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    <EditForm Model="@_leadMagnetDto" OnSubmit="@OnSubmit">
+        <LeadMagnetInformationFormFields LeadMagnet="@_leadMagnetDto"
+                                         AvailableCategories="@_availableCategories" />
+
+        <RadzenFieldset Text="Audit Information" class="rz-mt-2">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
+                        Created Date:
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        @_leadMagnetDto!.CreatedDate.ToString("g")
+                    </RadzenText>
+                </RadzenStack>
+                @if (_leadMagnetDto!.ModifiedDate.HasValue)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
+                            Modified Date:
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @_leadMagnetDto.ModifiedDate.Value.ToString("g")
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" class="rz-mt-3">
+            <RadzenButton Text="Cancel"
+                          ButtonStyle="ButtonStyle.Light"
+                          Click="@HandleCancel" />
+            <RadzenButton Text="Update"
+                          ButtonType="ButtonType.Submit"
+                          ButtonStyle="ButtonStyle.Primary"
+                          IsBusy="@_isSaving" />
+        </RadzenStack>
+    </EditForm>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = default!;
+
+    [Parameter]
+    public LeadMagnetDTO LeadMagnet { get; set; } = default!;
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+
+    private LeadMagnetDTO? _leadMagnetDto;
+    private bool _isSaving = false;
+    private IEnumerable<CategoryDTO> _availableCategories = new List<CategoryDTO>();
+
+    protected override void OnParametersSet()
+    {
+        _availableCategories = AvailableCategories.Where(c => c.IsActive).ToList();
+
+        // Create a copy of the lead magnet to edit (to avoid modifying the original)
+        _leadMagnetDto = new()
+        {
+            Id = LeadMagnet.Id,
+            CategoryId = LeadMagnet.CategoryId,
+            Title = LeadMagnet.Title,
+            FormActionUrl = LeadMagnet.FormActionUrl,
+            DownloadFileUrl = LeadMagnet.DownloadFileUrl,
+            IsActive = LeadMagnet.IsActive,
+            CreatedBy = LeadMagnet.CreatedBy,
+            CreatedDate = LeadMagnet.CreatedDate,
+            ModifiedBy = LeadMagnet.ModifiedBy,
+            ModifiedDate = LeadMagnet.ModifiedDate
+        };
+    }
+
+    private void HandleCancel()
+    {
+        DialogService.Close();
+    }
+
+    private async Task OnSubmit(EditContext editContext)
+    {
+        if (string.IsNullOrWhiteSpace(_leadMagnetDto!.Title))
+        {
+            await DialogService.Alert("Title is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (_leadMagnetDto.Title.Length > LeadMagnetConstants.TitleMaxLength)
+        {
+            await DialogService.Alert($"Title cannot exceed {LeadMagnetConstants.TitleMaxLength} characters.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (_leadMagnetDto.CategoryId <= 0)
+        {
+            await DialogService.Alert("Category is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (!IsValidOptionalHttpUrl(_leadMagnetDto.FormActionUrl))
+        {
+            await DialogService.Alert("Form Action URL must be a valid absolute URL (http:// or https://).", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (!IsValidOptionalHttpUrl(_leadMagnetDto.DownloadFileUrl))
+        {
+            await DialogService.Alert("Download File URL must be a valid absolute URL (http:// or https://).", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var updatedLeadMagnet = await LeadMagnetService.UpdateAsync(_leadMagnetDto, UserId);
+            DialogService.Close(updatedLeadMagnet);
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Updating Lead Magnet", new AlertOptions { OkButtonText = "OK" });
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private static bool IsValidOptionalHttpUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return true;
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed))
+        {
+            return false;
+        }
+
+        return parsed.Scheme is "http" or "https";
+    }
+}
+

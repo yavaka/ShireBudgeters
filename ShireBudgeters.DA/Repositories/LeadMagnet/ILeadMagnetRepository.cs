@@ -1,4 +1,4 @@
-﻿using ShireBudgeters.Common;
+using ShireBudgeters.Common;
 using ShireBudgeters.DA.Models;
 
 namespace ShireBudgeters.DA.Repositories.LeadMagnet;
@@ -10,6 +10,22 @@ namespace ShireBudgeters.DA.Repositories.LeadMagnet;
 /// and adds domain-specific methods for querying lead magnets by category and active status.</remarks>
 public interface ILeadMagnetRepository : IRepository<LeadMagnetModel, int>
 {
+    /// <summary>
+    /// Retrieves all lead magnets (active and inactive) for a specific user.
+    /// </summary>
+    /// <param name="userId">The identifier of the user who owns the associated categories.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A collection of lead magnets owned by the specified user, including category information.</returns>
+    Task<IEnumerable<LeadMagnetModel>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves only active lead magnets for a specific user.
+    /// </summary>
+    /// <param name="userId">The identifier of the user who owns the associated categories.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A collection of active lead magnets owned by the specified user, including category information.</returns>
+    Task<IEnumerable<LeadMagnetModel>> GetActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Retrieves all lead magnets (active and inactive) associated with a specific category.
     /// </summary>

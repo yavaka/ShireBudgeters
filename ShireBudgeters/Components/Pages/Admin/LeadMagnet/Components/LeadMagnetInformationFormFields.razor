@@ -1,0 +1,72 @@
+@using LeadMagnetConstants = ShireBudgeters.Common.Common.Constants.LeadMagnet
+@using ShireBudgeters.Common.DTOs
+
+<RadzenFieldset Text="Lead Magnet Information">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <RadzenFormField Text="Title" class="rz-col-12">
+            <ChildContent>
+                <RadzenTextBox @bind-Value="LeadMagnet.Title"
+                               Placeholder="Enter lead magnet title..."
+                               MaxLength="@LeadMagnetConstants.TitleMaxLength"
+                               class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Category" class="rz-col-12">
+            <ChildContent>
+                <RadzenDropDown @bind-Value="LeadMagnet.CategoryId"
+                                Data="AvailableCategories"
+                                TextProperty="Name"
+                                ValueProperty="Id"
+                                Placeholder="Select a category..."
+                                AllowClear="false"
+                                class="w-100">
+                    <Template Context="category">
+                        @if (category != null)
+                        {
+                            <div>
+                                @if (!string.IsNullOrWhiteSpace(category.Color))
+                                {
+                                    <span style="display: inline-block; width: 12px; height: 12px; background-color: @category.Color; border-radius: 2px; margin-right: 8px;"></span>
+                                }
+                                <span>@category.Name</span>
+                            </div>
+                        }
+                    </Template>
+                </RadzenDropDown>
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Form Action URL" class="rz-col-12">
+            <ChildContent>
+                <RadzenTextBox @bind-Value="LeadMagnet.FormActionUrl"
+                               Placeholder="https://..."
+                               MaxLength="@LeadMagnetConstants.FormActionUrlMaxLength"
+                               class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Download File URL" class="rz-col-12">
+            <ChildContent>
+                <RadzenTextBox @bind-Value="LeadMagnet.DownloadFileUrl"
+                               Placeholder="https://..."
+                               MaxLength="@LeadMagnetConstants.DownloadFileUrlMaxLength"
+                               class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+            <RadzenCheckBox @bind-Value="LeadMagnet.IsActive" />
+            <RadzenLabel Text="Active" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenFieldset>
+
+@code {
+    [Parameter]
+    public required LeadMagnetDTO LeadMagnet { get; set; }
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+}
+

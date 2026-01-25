@@ -1,4 +1,4 @@
-﻿using ShireBudgeters.BL.Common.Helpers;
+using ShireBudgeters.BL.Common.Helpers;
 using ShireBudgeters.BL.Common.Mappings;
 using ShireBudgeters.Common.DTOs;
 using ShireBudgeters.DA.Repositories.Category;
@@ -19,6 +19,30 @@ internal class LeadMagnetService(ILeadMagnetRepository leadMagnetRepository, ICa
     {
         var leadMagnet = await _leadMagnetRepository.GetByIdAsync(id, cancellationToken);
         return leadMagnet?.ToLeadMagnetDTO();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<LeadMagnetDTO>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException("UserId is required.", nameof(userId));
+        }
+
+        var leadMagnets = await _leadMagnetRepository.GetByUserIdAsync(userId, cancellationToken);
+        return leadMagnets.Select(lm => lm.ToLeadMagnetDTO());
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<LeadMagnetDTO>> GetActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException("UserId is required.", nameof(userId));
+        }
+
+        var leadMagnets = await _leadMagnetRepository.GetActiveByUserIdAsync(userId, cancellationToken);
+        return leadMagnets.Select(lm => lm.ToLeadMagnetDTO());
     }
 
     /// <inheritdoc/>

@@ -13,6 +13,16 @@ public interface ILeadMagnetService
     Task<LeadMagnetDTO?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets all lead magnets (active and inactive) owned by a specific user.
+    /// </summary>
+    Task<IEnumerable<LeadMagnetDTO>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all active lead magnets owned by a specific user.
+    /// </summary>
+    Task<IEnumerable<LeadMagnetDTO>> GetActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets all lead magnets (active and inactive) for a specific category.
     /// </summary>
     Task<IEnumerable<LeadMagnetDTO>> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken = default);
