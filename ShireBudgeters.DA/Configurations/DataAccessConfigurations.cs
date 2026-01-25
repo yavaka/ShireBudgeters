@@ -27,6 +27,9 @@ public static class DataAccessConfigurations
         services.AddDAOptions(configuration);
 
         // Configure the DbContext with SQL Server provider
+        // Note: DbContext is scoped per circuit in Blazor Server
+        // Multiple components in the same circuit share the same DbContext instance
+        // Components must ensure they don't perform concurrent operations on the same DbContext
         services.AddDbContext<ShireBudgetersDbContext>(options =>
         {
             options.UseSqlServer(

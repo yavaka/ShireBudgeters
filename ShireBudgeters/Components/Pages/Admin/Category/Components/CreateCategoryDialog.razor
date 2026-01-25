@@ -1,0 +1,104 @@
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.Category
+@using static ShireBudgeters.Common.DTOs.AuthDTOs
+@inject ICategoryService CategoryService
+@inject DialogService DialogService
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    <EditForm Model="@_categoryDto" OnSubmit="@OnSubmit">
+        <CategoryInformationFormFields Category="@_categoryDto"
+                                       AvailableCategories="@_availableCategories" />
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" class="rz-mt-3">
+            <RadzenButton Text="Cancel" 
+                         ButtonStyle="ButtonStyle.Light" 
+                         Click="@HandleCancel" />
+            <RadzenButton Text="Create" 
+                         ButtonType="ButtonType.Submit" 
+                         ButtonStyle="ButtonStyle.Primary"
+                         IsBusy="@_isSaving" />
+        </RadzenStack>
+    </EditForm>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = default!;
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+
+    private CategoryDTO _categoryDto = new()
+    {
+        Name = string.Empty,
+        Description = null,
+        Color = null,
+        UserId = string.Empty,
+        ParentCategoryId = null,
+        IsActive = true
+    };
+
+    private bool _isSaving = false;
+    private IEnumerable<CategoryDTO> _availableCategories = new List<CategoryDTO>();
+
+    protected override void OnParametersSet()
+    {
+        // Reset form when dialog is opened/reopened
+        _categoryDto = new()
+        {
+            Name = string.Empty,
+            Description = null,
+            Color = null,
+            UserId = UserId,
+            ParentCategoryId = null,
+            IsActive = true
+        };
+        _availableCategories = AvailableCategories.Where(c => c.IsActive).ToList();
+    }
+
+    private void HandleCancel()
+    {
+        DialogService.Close();
+    }
+
+    private async Task OnSubmit(EditContext editContext)
+    {
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(_categoryDto.Name))
+        {
+            await DialogService.Alert("Name is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        // Convert color to valid format if needed
+        if (!string.IsNullOrWhiteSpace(_categoryDto.Color))
+        {
+            var convertedColor = CategoryDialogColorHelper.NormalizeColor(_categoryDto.Color);
+            if (convertedColor == null)
+            {
+                await DialogService.Alert("Color must be a valid hex color (#FF0000, #fff) or CSS color name.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+            _categoryDto.Color = convertedColor;
+        }
+
+        _isSaving = true;
+        try
+        {
+            // Ensure UserId is set
+            _categoryDto.UserId = UserId;
+            
+            var createdCategory = await CategoryService.CreateAsync(_categoryDto, UserId);
+            DialogService.Close(createdCategory);
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Creating Category", new AlertOptions { OkButtonText = "OK" });
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}
+

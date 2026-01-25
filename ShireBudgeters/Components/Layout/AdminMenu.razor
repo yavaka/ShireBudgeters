@@ -1,4 +1,4 @@
-﻿@rendermode InteractiveServer
+@rendermode InteractiveServer
 
 <RadzenHeader>
     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
@@ -6,12 +6,12 @@
         <RadzenLabel Text="ShireBudgeters" />
     </RadzenStack>
 </RadzenHeader>
-<RadzenSidebar @bind-Expanded="@sidebarExpanded" style="margin-top: 50px;">
+<RadzenSidebar @bind-Expanded="@sidebarExpanded">
     <RadzenPanelMenu>
         <RadzenPanelMenuItem Text="Dashboard" Path="admin/dashboard" />
         <RadzenPanelMenuItem Text="Categories" Path="admin/categories" />
         <RadzenPanelMenuItem Text="Posts" Path="admin/posts" />
-        <RadzenPanelMenuItem Text="LeadMagnets" Path="admin/lead-magnets" />
+        <RadzenPanelMenuItem Text="Lead Magnets" Path="admin/lead-magnets" />
     </RadzenPanelMenu>
 </RadzenSidebar>
 

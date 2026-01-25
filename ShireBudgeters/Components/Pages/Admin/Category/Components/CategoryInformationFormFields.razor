@@ -1,0 +1,105 @@
+@using ShireBudgeters.Common.DTOs
+
+<RadzenFieldset Text="Category Information">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <RadzenFormField Text="Name" class="rz-col-12">
+            <ChildContent>
+                <RadzenTextBox @bind-Value="Category.Name"
+                               Placeholder="Enter category name..."
+                               MaxLength="100"
+                               class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Description" class="rz-col-12">
+            <ChildContent>
+                <RadzenTextArea @bind-Value="Category.Description"
+                                Placeholder="Enter description (optional)..."
+                                MaxLength="500"
+                                Rows="3"
+                                class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Color" class="rz-col-12">
+            <ChildContent>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                    <RadzenColorPicker @bind-Value="_colorValue"
+                                       ShowHSV="true"
+                                       ShowRGB="true"
+                                       ShowAlpha="false"
+                                       Change="OnColorPickerChanged" />
+                    <RadzenTextBox @bind-Value="Category.Color"
+                                   Placeholder="#FF5733 or CSS color name"
+                                   MaxLength="50"
+                                   Change="OnColorTextChanged"
+                                   Style="width: 200px;" />
+                    @if (!string.IsNullOrWhiteSpace(Category.Color))
+                    {
+                        <div style="width: 40px; height: 40px; background-color: @Category.Color; border: 1px solid #ccc; border-radius: 4px;"
+                             title="Color Preview"></div>
+                    }
+                </RadzenStack>
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Parent Category" class="rz-col-12">
+            <ChildContent>
+                <RadzenDropDown @bind-Value="Category.ParentCategoryId"
+                                Data="AvailableCategories"
+                                TextProperty="Name"
+                                ValueProperty="Id"
+                                Placeholder="Select parent category (optional)..."
+                                AllowClear="true"
+                                class="w-100">
+                    <Template Context="category">
+                        @if (category != null)
+                        {
+                            <div>
+                                @if (!string.IsNullOrWhiteSpace(category.Color))
+                                {
+                                    <span style="display: inline-block; width: 12px; height: 12px; background-color: @category.Color; border-radius: 2px; margin-right: 8px;"></span>
+                                }
+                                <span>@category.Name</span>
+                            </div>
+                        }
+                    </Template>
+                </RadzenDropDown>
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+            <RadzenCheckBox @bind-Value="Category.IsActive" />
+            <RadzenLabel Text="Active" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenFieldset>
+
+@code {
+    [Parameter]
+    public required CategoryDTO Category { get; set; }
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+
+    private string? _colorValue;
+
+    protected override void OnParametersSet()
+    {
+        // Sync the picker to the current model value whenever dialog opens/rebinds.
+        _colorValue = Category.Color;
+    }
+
+    private void OnColorPickerChanged()
+    {
+        Category.Color = CategoryDialogColorHelper.NormalizeColor(_colorValue);
+        StateHasChanged(); // Update preview
+    }
+
+    private void OnColorTextChanged()
+    {
+        _colorValue = string.IsNullOrWhiteSpace(Category.Color) ? null : Category.Color;
+        StateHasChanged(); // Update preview
+    }
+}
+

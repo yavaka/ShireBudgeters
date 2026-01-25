@@ -1,0 +1,131 @@
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.Category
+@using static ShireBudgeters.Common.DTOs.AuthDTOs
+@inject ICategoryService CategoryService
+@inject DialogService DialogService
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    <EditForm Model="@_categoryDto" OnSubmit="@OnSubmit">
+        <CategoryInformationFormFields Category="@_categoryDto"
+                                       AvailableCategories="@_availableCategories" />
+
+        <RadzenFieldset Text="Audit Information" class="rz-mt-2">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
+                        Created Date:
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        @_categoryDto!.CreatedDate.ToString("g")
+                    </RadzenText>
+                </RadzenStack>
+                @if (_categoryDto!.ModifiedDate.HasValue)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
+                            Modified Date:
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @_categoryDto.ModifiedDate.Value.ToString("g")
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" class="rz-mt-3">
+            <RadzenButton Text="Cancel" 
+                         ButtonStyle="ButtonStyle.Light" 
+                         Click="@HandleCancel" />
+            <RadzenButton Text="Update" 
+                         ButtonType="ButtonType.Submit" 
+                         ButtonStyle="ButtonStyle.Primary"
+                         IsBusy="@_isSaving" />
+        </RadzenStack>
+    </EditForm>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = default!;
+
+    [Parameter]
+    public CategoryDTO Category { get; set; } = default!;
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+
+    private CategoryDTO? _categoryDto;
+    private bool _isSaving = false;
+    private IEnumerable<CategoryDTO> _availableCategories = new List<CategoryDTO>();
+
+    protected override void OnParametersSet()
+    {
+        // Create a copy of the category to edit (to avoid modifying the original)
+        _categoryDto = new()
+        {
+            Id = Category.Id,
+            Name = Category.Name,
+            Description = Category.Description,
+            Color = Category.Color,
+            UserId = Category.UserId,
+            ParentCategoryId = Category.ParentCategoryId,
+            IsActive = Category.IsActive,
+            CreatedBy = Category.CreatedBy,
+            CreatedDate = Category.CreatedDate,
+            ModifiedBy = Category.ModifiedBy,
+            ModifiedDate = Category.ModifiedDate
+        };
+
+        // Exclude current category and its children from parent category options to prevent circular references
+        _availableCategories = AvailableCategories
+            .Where(c => c.IsActive && c.Id != _categoryDto.Id)
+            .ToList();
+    }
+
+    private void HandleCancel()
+    {
+        DialogService.Close();
+    }
+
+    private async Task OnSubmit(EditContext editContext)
+    {
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(_categoryDto!.Name))
+        {
+            await DialogService.Alert("Name is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        // Convert color to valid format if needed
+        if (!string.IsNullOrWhiteSpace(_categoryDto.Color))
+        {
+            var convertedColor = CategoryDialogColorHelper.NormalizeColor(_categoryDto.Color);
+            if (convertedColor == null)
+            {
+                await DialogService.Alert("Color must be a valid hex color (#FF0000, #fff) or CSS color name.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+            _categoryDto.Color = convertedColor;
+        }
+
+        _isSaving = true;
+        try
+        {
+            // Ensure UserId is set
+            _categoryDto.UserId = UserId;
+            
+            var updatedCategory = await CategoryService.UpdateAsync(_categoryDto, UserId);
+            DialogService.Close(updatedCategory);
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Updating Category", new AlertOptions { OkButtonText = "OK" });
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}
+

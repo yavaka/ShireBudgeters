@@ -1,0 +1,216 @@
+@page "/admin/categories"
+
+@using Microsoft.AspNetCore.Authorization
+@using ShireBudgeters.BL.Services.Category
+@using ShireBudgeters.BL.Services.Identity
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.Components.Pages.Admin.Category.Components
+@using static ShireBudgeters.Common.DTOs.AuthDTOs
+
+@layout AdminLayout
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject ICategoryService CategoryService
+@inject IIdentityService IdentityService
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Categories Management</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem" class="rz-p-4">
+    <RadzenText Text="Categories Management"
+                TextStyle="TextStyle.H3"
+                class="rz-mb-2" />
+
+    <CategoryActionBar OnCreate="@HandleCreate"
+                       OnSearch="@HandleSearch" />
+
+    @if (_isLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="false" />
+    }
+    else if (!_allCategories.Any())
+    {
+        <RadzenText Text="No categories found. Create your first category to get started."
+                    TextStyle="TextStyle.Body1"
+                    class="rz-text-secondary rz-text-center rz-p-4" />
+    }
+    else
+    {
+        <RadzenRow Gap="1.5rem">
+            @foreach (var category in _filteredCategories)
+            {
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                    <RadzenCard class="rz-shadow-2">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            @if (!string.IsNullOrWhiteSpace(category.Color))
+                            {
+                                <div style="height: 4px; background-color: @category.Color; margin: -16px -16px 16px -16px;"></div>
+                            }
+                            <RadzenText Text="@category.Name"
+                                        TextStyle="TextStyle.H6"
+                                        class="rz-fw-bold" />
+                            @if (!string.IsNullOrWhiteSpace(category.Description))
+                            {
+                                <RadzenText Text="@category.Description"
+                                            TextStyle="TextStyle.Body2"
+                                            class="rz-text-secondary" />
+                            }
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" class="rz-mt-2">
+                                <RadzenBadge Text="@(category.IsActive ? "Active" : "Inactive")"
+                                             BadgeStyle="@(category.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-2">
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => HandleEdit(category))" />
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => HandleDelete(category))" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            }
+        </RadzenRow>
+    }
+</RadzenStack>
+
+@code {
+    private IEnumerable<CategoryDTO> _allCategories = new List<CategoryDTO>();
+    private IEnumerable<CategoryDTO> _filteredCategories = new List<CategoryDTO>();
+    private bool _isLoading = true;
+    private bool _hasLoadedData = false;
+
+    private UserInfoDTO? _currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentUser = await IdentityService.GetCurrentUserAsync();
+        if (_currentUser is null)
+        {
+            NavigationManager.NavigateTo("/Account/Login", forceLoad: true);
+            return;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_currentUser is not null && !_hasLoadedData)
+        {
+            await LoadCategoriesAsync();
+            _hasLoadedData = true; // Prevents infinite refresh loops
+        }
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        _isLoading = true;
+        _allCategories = await CategoryService.GetByUserIdAsync(_currentUser.Id);
+        _filteredCategories = _allCategories;
+        _isLoading = false;
+    }
+
+    private async Task HandleCreate()
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        var result = await DialogService.OpenAsync<CreateCategoryDialog>("Create Category",
+            new Dictionary<string, object?>
+            {
+                { "UserId", _currentUser.Id },
+                { "AvailableCategories", _allCategories }
+            },
+            new DialogOptions
+            {
+                Width = "600px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result is CategoryDTO createdCategory)
+        {
+            // Reload categories after successful creation
+            await LoadCategoriesAsync();
+            StateHasChanged();
+        }
+    }
+
+    private void HandleSearch(string searchValue)
+    {
+        _filteredCategories = _allCategories.Where(c =>
+            string.IsNullOrWhiteSpace(searchValue) ||
+            c.Name.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            (c.Description?.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ?? false))
+            .ToList();
+        StateHasChanged();
+    }
+
+    private async Task HandleEdit(CategoryDTO category)
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        var result = await DialogService.OpenAsync<EditCategoryDialog>("Edit Category",
+            new Dictionary<string, object?>
+            {
+                { "UserId", _currentUser.Id },
+                { "Category", category },
+                { "AvailableCategories", _allCategories }
+            },
+            new DialogOptions
+            {
+                Width = "600px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result is CategoryDTO updatedCategory)
+        {
+            // Reload categories after successful update
+            await LoadCategoriesAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleDelete(CategoryDTO category)
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to permanently delete '{category.Name}'? This action cannot be undone.",
+            "Delete Category",
+            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        try
+        {
+            await CategoryService.DeleteAsync(category.Id, _currentUser.Id);
+            await LoadCategoriesAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Deleting Category", new AlertOptions { OkButtonText = "OK" });
+        }
+    }
+}

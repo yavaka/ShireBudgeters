@@ -191,6 +191,11 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
         existingCategory.ModifiedBy = userId;
         existingCategory.ModifiedDate = DateTime.UtcNow;
 
+        // Clear navigation properties to avoid tracking conflicts before updating
+        existingCategory.User = null;
+        existingCategory.ParentCategory = null;
+        existingCategory.ChildCategories = null;
+
         await _categoryRepository.UpdateAsync(existingCategory, cancellationToken);
         return existingCategory.ToCategoryDTO();
     }
