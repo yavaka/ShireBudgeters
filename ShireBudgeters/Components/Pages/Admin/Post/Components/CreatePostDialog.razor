@@ -1,0 +1,103 @@
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.Post
+@using static ShireBudgeters.Common.DTOs.AuthDTOs
+@inject IPostService PostService
+@inject DialogService DialogService
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    <EditForm Model="@_postDto" OnSubmit="@OnSubmit">
+        <PostInformationFormFields Post="@_postDto"
+                                   AvailableCategories="@_availableCategories" />
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" class="rz-mt-3">
+            <RadzenButton Text="Cancel" 
+                         ButtonStyle="ButtonStyle.Light" 
+                         Click="@HandleCancel" />
+            <RadzenButton Text="Create" 
+                         ButtonType="ButtonType.Submit" 
+                         ButtonStyle="ButtonStyle.Primary"
+                         IsBusy="@_isSaving" />
+        </RadzenStack>
+    </EditForm>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = default!;
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+
+    private PostDTO _postDto = new()
+    {
+        Title = string.Empty,
+        Slug = string.Empty,
+        ContentBody = null,
+        FeaturedImageUrl = null,
+        MetaDescription = null,
+        AuthorId = string.Empty,
+        CategoryId = null,
+        PublicationDate = DateTime.UtcNow,
+        IsPublished = false
+    };
+
+    private bool _isSaving = false;
+    private IEnumerable<CategoryDTO> _availableCategories = new List<CategoryDTO>();
+
+    protected override void OnParametersSet()
+    {
+        // Reset form when dialog is opened/reopened
+        _postDto = new()
+        {
+            Title = string.Empty,
+            Slug = string.Empty,
+            ContentBody = null,
+            FeaturedImageUrl = null,
+            MetaDescription = null,
+            AuthorId = UserId,
+            CategoryId = null,
+            PublicationDate = DateTime.UtcNow,
+            IsPublished = false
+        };
+        _availableCategories = AvailableCategories.ToList();
+    }
+
+    private void HandleCancel()
+    {
+        DialogService.Close();
+    }
+
+    private async Task OnSubmit(EditContext editContext)
+    {
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(_postDto.Title))
+        {
+            await DialogService.Alert("Title is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_postDto.Slug))
+        {
+            await DialogService.Alert("Slug is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            // Ensure AuthorId is set
+            _postDto.AuthorId = UserId;
+            
+            var createdPost = await PostService.CreateAsync(_postDto, UserId);
+            DialogService.Close(createdPost);
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Creating Post", new AlertOptions { OkButtonText = "OK" });
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}

@@ -1,0 +1,291 @@
+@page "/admin/posts"
+
+@using Microsoft.AspNetCore.Authorization
+@using ShireBudgeters.BL.Services.Post
+@using ShireBudgeters.BL.Services.Identity
+@using ShireBudgeters.BL.Services.Category
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.Components.Pages.Admin.Post.Components
+@using static ShireBudgeters.Common.DTOs.AuthDTOs
+
+@layout AdminLayout
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IPostService PostService
+@inject ICategoryService CategoryService
+@inject IIdentityService IdentityService
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Posts Management</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem" class="rz-p-4">
+    <RadzenText Text="Posts Management"
+                TextStyle="TextStyle.H3"
+                class="rz-mb-2" />
+
+    <PostActionBar OnCreate="@HandleCreate"
+                   OnSearch="@HandleSearch" />
+
+    @if (_isLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="false" />
+    }
+    else if (!_allPosts.Any())
+    {
+        <RadzenText Text="No posts found. Create your first post to get started."
+                    TextStyle="TextStyle.Body1"
+                    class="rz-text-secondary rz-text-center rz-p-4" />
+    }
+    else
+    {
+        <RadzenRow Gap="1.5rem">
+            @foreach (var post in _filteredPosts)
+            {
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                    <RadzenCard class="rz-shadow-2">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText Text="@post.Title"
+                                        TextStyle="TextStyle.H6"
+                                        class="rz-fw-bold" />
+                            @if (!string.IsNullOrWhiteSpace(post.MetaDescription))
+                            {
+                                <RadzenText Text="@post.MetaDescription"
+                                            TextStyle="TextStyle.Body2"
+                                            class="rz-text-secondary" />
+                            }
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" class="rz-mt-2">
+                                <RadzenBadge Text="@(post.IsPublished ? "Published" : "Draft")"
+                                             BadgeStyle="@(post.IsPublished ? BadgeStyle.Success : BadgeStyle.Warning)" />
+                                @if (post.PublicationDate > DateTime.UtcNow)
+                                {
+                                    <RadzenBadge Text="Scheduled"
+                                                 BadgeStyle="BadgeStyle.Info" />
+                                }
+                            </RadzenStack>
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary">
+                                Published: @post.PublicationDate.ToString("g")
+                            </RadzenText>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-2">
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => HandleEdit(post))" />
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => HandleDelete(post))" />
+                                @if (!post.IsPublished)
+                                {
+                                    <RadzenButton Icon="check_circle"
+                                                  ButtonStyle="ButtonStyle.Success"
+                                                  Size="ButtonSize.Small"
+                                                  Click="@(() => HandlePublish(post))"
+                                                  Title="Publish" />
+                                }
+                                else
+                                {
+                                    <RadzenButton Icon="cancel"
+                                                  ButtonStyle="ButtonStyle.Warning"
+                                                  Size="ButtonSize.Small"
+                                                  Click="@(() => HandleUnpublish(post))"
+                                                  Title="Unpublish" />
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            }
+        </RadzenRow>
+    }
+</RadzenStack>
+
+@code {
+    private IEnumerable<PostDTO> _allPosts = new List<PostDTO>();
+    private IEnumerable<PostDTO> _filteredPosts = new List<PostDTO>();
+    private IEnumerable<CategoryDTO> _allCategories = new List<CategoryDTO>();
+    private bool _isLoading = true;
+    private bool _hasLoadedData = false;
+
+    private UserInfoDTO? _currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentUser = await IdentityService.GetCurrentUserAsync();
+        if (_currentUser is null)
+        {
+            NavigationManager.NavigateTo("/Account/Login", forceLoad: true);
+            return;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_currentUser is not null && !_hasLoadedData)
+        {
+            await LoadPostsAsync();
+            await LoadCategoriesAsync();
+            _hasLoadedData = true; // Prevents infinite refresh loops
+        }
+    }
+
+    private async Task LoadPostsAsync()
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        _isLoading = true;
+        _allPosts = await PostService.GetByAuthorIdAsync(_currentUser.Id);
+        _filteredPosts = _allPosts;
+        _isLoading = false;
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        _allCategories = await CategoryService.GetActiveByUserIdAsync(_currentUser.Id);
+    }
+
+    private async Task HandleCreate()
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        var result = await DialogService.OpenAsync<CreatePostDialog>("Create Post",
+            new Dictionary<string, object?>
+            {
+                { "UserId", _currentUser.Id },
+                { "AvailableCategories", _allCategories }
+            },
+            new DialogOptions
+            {
+                Width = "90vw",
+                Height = "90vh",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result is PostDTO createdPost)
+        {
+            // Reload posts after successful creation
+            await LoadPostsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private void HandleSearch(string searchValue)
+    {
+        _filteredPosts = _allPosts.Where(p =>
+            string.IsNullOrWhiteSpace(searchValue) ||
+            p.Title.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+            (p.MetaDescription?.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (p.ContentBody?.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ?? false))
+            .ToList();
+        StateHasChanged();
+    }
+
+    private async Task HandleEdit(PostDTO post)
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        var result = await DialogService.OpenAsync<EditPostDialog>("Edit Post",
+            new Dictionary<string, object?>
+            {
+                { "UserId", _currentUser.Id },
+                { "Post", post },
+                { "AvailableCategories", _allCategories }
+            },
+            new DialogOptions
+            {
+                Width = "90vw",
+                Height = "90vh",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result is PostDTO updatedPost)
+        {
+            // Reload posts after successful update
+            await LoadPostsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleDelete(PostDTO post)
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to permanently delete '{post.Title}'? This action cannot be undone.",
+            "Delete Post",
+            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        try
+        {
+            await PostService.DeleteAsync(post.Id, _currentUser.Id);
+            await LoadPostsAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Deleting Post", new AlertOptions { OkButtonText = "OK" });
+        }
+    }
+
+    private async Task HandlePublish(PostDTO post)
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await PostService.PublishAsync(post.Id, _currentUser.Id);
+            await LoadPostsAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Publishing Post", new AlertOptions { OkButtonText = "OK" });
+        }
+    }
+
+    private async Task HandleUnpublish(PostDTO post)
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await PostService.UnpublishAsync(post.Id, _currentUser.Id);
+            await LoadPostsAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Unpublishing Post", new AlertOptions { OkButtonText = "OK" });
+        }
+    }
+}

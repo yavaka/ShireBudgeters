@@ -1,0 +1,202 @@
+@using ShireBudgeters.Common.DTOs
+@using System.Text.RegularExpressions
+
+<RadzenFieldset Text="Post Information">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <RadzenCard Style="background-color: #f5f5f5; border-left: 4px solid #2196F3;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    <RadzenIcon Icon="info" Style="color: #2196F3;" />
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-fw-bold">Field Information</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="margin-left: 24px;">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Slug:</strong> URL-friendly identifier (lowercase, alphanumeric and hyphens only)
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Featured Image URL:</strong> Enter a relative path (e.g., /images/posts/image.jpg) or full URL (e.g., https://example.com/image.jpg)
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Meta Description:</strong> Keep it under 160 characters for optimal SEO and social media previews
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Publication Date:</strong> Schedule the post for future publication or publish immediately
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenFormField Text="Title" class="rz-col-12">
+            <ChildContent>
+                <RadzenTextBox @bind-Value="Post.Title"
+                               Placeholder="Enter post title..."
+                               MaxLength="200"
+                               Change="@OnTitleChanged"
+                               class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Slug" class="rz-col-12">
+            <ChildContent>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    <RadzenTextBox @bind-Value="Post.Slug"
+                                   Placeholder="url-friendly-slug"
+                                   MaxLength="200"
+                                   class="w-100" />
+                    <RadzenButton Icon="refresh"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Size="ButtonSize.Small"
+                                  Click="@GenerateSlugFromTitle"
+                                  Title="Generate slug from title" />
+                </RadzenStack>
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Category" class="rz-col-12">
+            <ChildContent>
+                <RadzenDropDown @bind-Value="Post.CategoryId"
+                                Data="AvailableCategories"
+                                TextProperty="Name"
+                                ValueProperty="Id"
+                                Placeholder="Select category (optional)..."
+                                AllowClear="true"
+                                class="w-100">
+                    <Template Context="category">
+                        @if (category != null)
+                        {
+                            <div>
+                                @if (!string.IsNullOrWhiteSpace(category.Color))
+                                {
+                                    <span style="display: inline-block; width: 12px; height: 12px; background-color: @category.Color; border-radius: 2px; margin-right: 8px;"></span>
+                                }
+                                <span>@category.Name</span>
+                            </div>
+                        }
+                    </Template>
+                </RadzenDropDown>
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Content Body" class="rz-col-12">
+            <ChildContent>
+                <RadzenHtmlEditor @bind-Value="Post.ContentBody" Style="min-height: 400px;">
+                        <RadzenHtmlEditorUndo />
+                        <RadzenHtmlEditorRedo />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorBold />
+                        <RadzenHtmlEditorItalic />
+                        <RadzenHtmlEditorUnderline />
+                        <RadzenHtmlEditorStrikeThrough />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorAlignLeft />
+                        <RadzenHtmlEditorAlignCenter />
+                        <RadzenHtmlEditorAlignRight />
+                        <RadzenHtmlEditorJustify />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorIndent />
+                        <RadzenHtmlEditorOutdent />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorUnorderedList />
+                        <RadzenHtmlEditorOrderedList />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorColor />
+                        <RadzenHtmlEditorBackground />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorRemoveFormat />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorSubscript />
+                        <RadzenHtmlEditorSuperscript />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorLink />
+                        <RadzenHtmlEditorUnlink />
+                        <RadzenHtmlEditorImage />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorFontName />
+                        <RadzenHtmlEditorFontSize />
+                        <RadzenHtmlEditorFormatBlock />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorSource />
+                </RadzenHtmlEditor>
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Featured Image URL" class="rz-col-12">
+            <ChildContent>
+                <RadzenTextBox @bind-Value="Post.FeaturedImageUrl"
+                               Placeholder="/images/posts/featured-image.jpg"
+                               MaxLength="500"
+                               class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Meta Description" class="rz-col-12">
+            <ChildContent>
+                <RadzenTextArea @bind-Value="Post.MetaDescription"
+                                Placeholder="Brief description for search engines and social media..."
+                                MaxLength="160"
+                                Rows="3"
+                                class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenFormField Text="Publication Date" class="rz-col-12">
+            <ChildContent>
+                <RadzenDatePicker @bind-Value="Post.PublicationDate"
+                                  ShowTime="true"
+                                  DateFormat="MM/dd/yyyy HH:mm"
+                                  class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+            <RadzenCheckBox @bind-Value="Post.IsPublished" />
+            <RadzenLabel Text="Published" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenFieldset>
+
+@code {
+    [Parameter]
+    public required PostDTO Post { get; set; }
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+
+    private void OnTitleChanged()
+    {
+        // Auto-generate slug if slug is empty or matches the previous title's slug
+        if (string.IsNullOrWhiteSpace(Post.Slug) || Post.Slug == GenerateSlug(Post.Title))
+        {
+            GenerateSlugFromTitle();
+        }
+    }
+
+    private void GenerateSlugFromTitle()
+    {
+        if (!string.IsNullOrWhiteSpace(Post.Title))
+        {
+            Post.Slug = GenerateSlug(Post.Title);
+        }
+    }
+
+    private static string GenerateSlug(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return string.Empty;
+        }
+
+        // Convert to lowercase
+        var slug = title.ToLowerInvariant();
+
+        // Replace spaces and special characters with hyphens
+        slug = Regex.Replace(slug, @"[^a-z0-9\s-]", "");
+        slug = Regex.Replace(slug, @"\s+", "-");
+        slug = Regex.Replace(slug, @"-+", "-");
+
+        // Remove leading and trailing hyphens
+        slug = slug.Trim('-');
+
+        return slug;
+    }
+}

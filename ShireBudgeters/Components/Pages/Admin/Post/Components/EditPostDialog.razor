@@ -1,0 +1,124 @@
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.Post
+@using static ShireBudgeters.Common.DTOs.AuthDTOs
+@inject IPostService PostService
+@inject DialogService DialogService
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    <EditForm Model="@_postDto" OnSubmit="@OnSubmit">
+        <PostInformationFormFields Post="@_postDto"
+                                   AvailableCategories="@_availableCategories" />
+
+        <RadzenFieldset Text="Audit Information" class="rz-mt-2">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
+                        Created Date:
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        @_postDto!.CreatedDate.ToString("g")
+                    </RadzenText>
+                </RadzenStack>
+                @if (_postDto!.ModifiedDate.HasValue)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
+                            Modified Date:
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @_postDto.ModifiedDate.Value.ToString("g")
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" class="rz-mt-3">
+            <RadzenButton Text="Cancel" 
+                         ButtonStyle="ButtonStyle.Light" 
+                         Click="@HandleCancel" />
+            <RadzenButton Text="Update" 
+                         ButtonType="ButtonType.Submit" 
+                         ButtonStyle="ButtonStyle.Primary"
+                         IsBusy="@_isSaving" />
+        </RadzenStack>
+    </EditForm>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = default!;
+
+    [Parameter]
+    public PostDTO Post { get; set; } = default!;
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> AvailableCategories { get; set; } = new List<CategoryDTO>();
+
+    private PostDTO? _postDto;
+    private bool _isSaving = false;
+    private IEnumerable<CategoryDTO> _availableCategories = new List<CategoryDTO>();
+
+    protected override void OnParametersSet()
+    {
+        // Create a copy of the post to edit (to avoid modifying the original)
+        _postDto = new()
+        {
+            Id = Post.Id,
+            Title = Post.Title,
+            Slug = Post.Slug,
+            ContentBody = Post.ContentBody,
+            FeaturedImageUrl = Post.FeaturedImageUrl,
+            MetaDescription = Post.MetaDescription,
+            AuthorId = Post.AuthorId,
+            CategoryId = Post.CategoryId,
+            PublicationDate = Post.PublicationDate,
+            IsPublished = Post.IsPublished,
+            CreatedBy = Post.CreatedBy,
+            CreatedDate = Post.CreatedDate,
+            ModifiedBy = Post.ModifiedBy,
+            ModifiedDate = Post.ModifiedDate
+        };
+
+        _availableCategories = AvailableCategories.ToList();
+    }
+
+    private void HandleCancel()
+    {
+        DialogService.Close();
+    }
+
+    private async Task OnSubmit(EditContext editContext)
+    {
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(_postDto!.Title))
+        {
+            await DialogService.Alert("Title is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_postDto.Slug))
+        {
+            await DialogService.Alert("Slug is required.", "Validation Error", new AlertOptions { OkButtonText = "OK" });
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            // Ensure AuthorId is set
+            _postDto.AuthorId = UserId;
+            
+            var updatedPost = await PostService.UpdateAsync(_postDto, UserId);
+            DialogService.Close(updatedPost);
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error Updating Post", new AlertOptions { OkButtonText = "OK" });
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}
