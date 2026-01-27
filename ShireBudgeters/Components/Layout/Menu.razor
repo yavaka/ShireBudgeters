@@ -6,9 +6,16 @@
         <RadzenLabel Text="ShireBudgeters" />
     </RadzenStack>
 </RadzenHeader>
-<RadzenSidebar @bind-Expanded="@sidebarExpanded">
+<RadzenSidebar FullHeight="true" Responsive="false" @bind-Expanded="@sidebarExpanded" style="position: absolute; z-index: 3">
+    <RadzenStack AlignItems="AlignItems.End" class="rz-p-2">
+        <RadzenButton Icon="west" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
+    </RadzenStack>
     <SideMenu />
 </RadzenSidebar>
+@if (sidebarExpanded)
+{
+    <div @onclick="@(() => sidebarExpanded = false)" class="rz-dialog-mask" style="position: absolute; z-index: 2"></div>
+}
 
 @code {
     bool sidebarExpanded = true;

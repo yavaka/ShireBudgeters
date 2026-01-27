@@ -1,13 +1,374 @@
 @page "/admin/dashboard"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
+@using ShireBudgeters.BL.Services.Category
+@using ShireBudgeters.BL.Services.Post
+@using ShireBudgeters.BL.Services.LeadMagnet
+@using ShireBudgeters.BL.Services.Identity
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.ViewModels
+@using static ShireBudgeters.Common.DTOs.AuthDTOs
 
 @layout AdminLayout
 
 @attribute [Authorize]
 
 @rendermode InteractiveServer
+@implements IDisposable
 
 <PageTitle>Admin Dashboard</PageTitle>
 
-<h3>Dashboard</h3>
+<RadzenStack Orientation="Orientation.Vertical" Gap="2rem" class="rz-p-4">
+    <RadzenStack Orientation="Orientation.Horizontal" 
+                 AlignItems="AlignItems.Center" 
+                 JustifyContent="JustifyContent.SpaceBetween"
+                 Gap="1rem">
+        <RadzenText Text="Dashboard"
+                    TextStyle="TextStyle.H3"
+                    class="rz-mb-0" />
+    </RadzenStack>
 
+    @if (_isLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="false" />
+    }
+    else
+    {
+        <RadzenStack Orientation="Orientation.Vertical" Gap="2rem">
+            @* Statistics Cards *@
+            <RadzenRow Gap="1.5rem">
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="rz-shadow-2">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText Text="Categories"
+                                        TextStyle="TextStyle.Body2"
+                                        class="rz-text-secondary rz-mb-0" />
+                            <RadzenText Text="@_stats.TotalCategories.ToString()"
+                                        TextStyle="TextStyle.H2"
+                                        class="rz-fw-bold rz-mb-0" />
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" class="rz-mt-2">
+                                <RadzenBadge Text="@($"Active: {_stats.ActiveCategories}")"
+                                             BadgeStyle="BadgeStyle.Success" />
+                                <RadzenBadge Text="@($"Inactive: {_stats.InactiveCategories}")"
+                                             BadgeStyle="BadgeStyle.Danger" />
+                            </RadzenStack>
+                            <RadzenButton Text="Manage Categories"
+                                          Icon="folder"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Size="ButtonSize.Small"
+                                          class="rz-mt-2"
+                                          Click="@(() => NavigationManager.NavigateTo("/admin/categories"))" />
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="rz-shadow-2">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText Text="Posts"
+                                        TextStyle="TextStyle.Body2"
+                                        class="rz-text-secondary rz-mb-0" />
+                            <RadzenText Text="@_stats.TotalPosts.ToString()"
+                                        TextStyle="TextStyle.H2"
+                                        class="rz-fw-bold rz-mb-0" />
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" class="rz-mt-2">
+                                <RadzenBadge Text="@($"Published: {_stats.PublishedPosts}")"
+                                             BadgeStyle="BadgeStyle.Success" />
+                                <RadzenBadge Text="@($"Drafts: {_stats.DraftPosts}")"
+                                             BadgeStyle="BadgeStyle.Warning" />
+                            </RadzenStack>
+                            <RadzenButton Text="Manage Posts"
+                                          Icon="article"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Size="ButtonSize.Small"
+                                          class="rz-mt-2"
+                                          Click="@(() => NavigationManager.NavigateTo("/admin/posts"))" />
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="rz-shadow-2">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenText Text="Lead Magnets"
+                                        TextStyle="TextStyle.Body2"
+                                        class="rz-text-secondary rz-mb-0" />
+                            <RadzenText Text="@_stats.TotalLeadMagnets.ToString()"
+                                        TextStyle="TextStyle.H2"
+                                        class="rz-fw-bold rz-mb-0" />
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" class="rz-mt-2">
+                                <RadzenBadge Text="@($"Active: {_stats.ActiveLeadMagnets}")"
+                                             BadgeStyle="BadgeStyle.Success" />
+                                <RadzenBadge Text="@($"Inactive: {_stats.InactiveLeadMagnets}")"
+                                             BadgeStyle="BadgeStyle.Danger" />
+                            </RadzenStack>
+                            <RadzenButton Text="Manage Lead Magnets"
+                                          Icon="bookmark"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Size="ButtonSize.Small"
+                                          class="rz-mt-2"
+                                          Click="@(() => NavigationManager.NavigateTo("/admin/lead-magnets"))" />
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+
+            @* Recent Activity Section *@
+            <RadzenRow Gap="1.5rem">
+                <RadzenColumn Size="12" SizeLG="6">
+                    <RadzenCard class="rz-shadow-2">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                            <RadzenText Text="Recent Posts"
+                                        TextStyle="TextStyle.H5"
+                                        class="rz-fw-bold rz-mb-0" />
+                            @if (_recentPosts.Any())
+                            {
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                                    @foreach (var post in _recentPosts.Take(5))
+                                    {
+                                        <RadzenStack Orientation="Orientation.Horizontal"
+                                                     AlignItems="AlignItems.Center"
+                                                     JustifyContent="JustifyContent.SpaceBetween"
+                                                     class="rz-p-2 rz-border-radius-small"
+                                                     style="background-color: var(--rz-base-background-color);">
+                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" style="flex: 1;">
+                                                <RadzenText Text="@post.Title"
+                                                            TextStyle="TextStyle.Body1"
+                                                            class="rz-fw-semibold rz-mb-0" />
+                                                <RadzenText Text="@(post.IsPublished ? "Published" : "Draft")"
+                                                            TextStyle="TextStyle.Body2"
+                                                            class="rz-text-secondary rz-mb-0" />
+                                            </RadzenStack>
+                                            <RadzenBadge Text="@(post.IsPublished ? "Published" : "Draft")"
+                                                         BadgeStyle="@(post.IsPublished ? BadgeStyle.Success : BadgeStyle.Warning)" />
+                                        </RadzenStack>
+                                    }
+                                </RadzenStack>
+                                <RadzenButton Text="View All Posts"
+                                              Icon="arrow_forward"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              class="rz-mt-2"
+                                              Click="@(() => NavigationManager.NavigateTo("/admin/posts"))" />
+                            }
+                            else
+                            {
+                                <RadzenText Text="No posts yet. Create your first post to get started."
+                                            TextStyle="TextStyle.Body2"
+                                            class="rz-text-secondary rz-text-center rz-p-4" />
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeLG="6">
+                    <RadzenCard class="rz-shadow-2">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                            <RadzenText Text="Recent Lead Magnets"
+                                        TextStyle="TextStyle.H5"
+                                        class="rz-fw-bold rz-mb-0" />
+                            @if (_recentLeadMagnets.Any())
+                            {
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                                    @foreach (var leadMagnet in _recentLeadMagnets.Take(5))
+                                    {
+                                        <RadzenStack Orientation="Orientation.Horizontal"
+                                                     AlignItems="AlignItems.Center"
+                                                     JustifyContent="JustifyContent.SpaceBetween"
+                                                     class="rz-p-2 rz-border-radius-small"
+                                                     style="background-color: var(--rz-base-background-color);">
+                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" style="flex: 1;">
+                                                <RadzenText Text="@leadMagnet.Title"
+                                                            TextStyle="TextStyle.Body1"
+                                                            class="rz-fw-semibold rz-mb-0" />
+                                                <RadzenText Text="@(leadMagnet.IsActive ? "Active" : "Inactive")"
+                                                            TextStyle="TextStyle.Body2"
+                                                            class="rz-text-secondary rz-mb-0" />
+                                            </RadzenStack>
+                                            <RadzenBadge Text="@(leadMagnet.IsActive ? "Active" : "Inactive")"
+                                                         BadgeStyle="@(leadMagnet.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)" />
+                                        </RadzenStack>
+                                    }
+                                </RadzenStack>
+                                <RadzenButton Text="View All Lead Magnets"
+                                              Icon="arrow_forward"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              class="rz-mt-2"
+                                              Click="@(() => NavigationManager.NavigateTo("/admin/lead-magnets"))" />
+                            }
+                            else
+                            {
+                                <RadzenText Text="No lead magnets yet. Create your first lead magnet to get started."
+                                            TextStyle="TextStyle.Body2"
+                                            class="rz-text-secondary rz-text-center rz-p-4" />
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+
+            @* Quick Actions *@
+            <RadzenCard class="rz-shadow-2">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <RadzenText Text="Quick Actions"
+                                TextStyle="TextStyle.H5"
+                                class="rz-fw-bold rz-mb-0" />
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenButton Text="Create Category"
+                                          Icon="add"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Variant="Variant.Flat"
+                                          class="rz-w-100"
+                                          Click="@(() => NavigationManager.NavigateTo("/admin/categories"))" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenButton Text="Create Post"
+                                          Icon="add"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Variant="Variant.Flat"
+                                          class="rz-w-100"
+                                          Click="@(() => NavigationManager.NavigateTo("/admin/posts"))" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenButton Text="Create Lead Magnet"
+                                          Icon="add"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Variant="Variant.Flat"
+                                          class="rz-w-100"
+                                          Click="@(() => NavigationManager.NavigateTo("/admin/lead-magnets"))" />
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    [Inject] private ICategoryService CategoryService { get; set; } = default!;
+    [Inject] private IPostService PostService { get; set; } = default!;
+    [Inject] private ILeadMagnetService LeadMagnetService { get; set; } = default!;
+    [Inject] private IIdentityService IdentityService { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private bool _isLoading = true;
+    private UserInfoDTO? _currentUser;
+    private DashboardStatsViewModel _stats = new();
+    private List<PostDTO> _recentPosts = new();
+    private List<LeadMagnetDTO> _recentLeadMagnets = new();
+    private string? _lastLoadedPath;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentUser = await IdentityService.GetCurrentUserAsync();
+        if (_currentUser is null)
+        {
+            NavigationManager.NavigateTo("/Account/Login", forceLoad: true);
+            return;
+        }
+
+        // Subscribe to navigation changes to reload data when returning to dashboard
+        NavigationManager.LocationChanged += OnLocationChanged;
+
+        await LoadDashboardDataAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reload data when component parameters change (e.g., navigating back to dashboard)
+        if (_currentUser is not null)
+        {
+            var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            if (currentPath == "admin/dashboard" && currentPath != _lastLoadedPath && !_isLoading)
+            {
+                await LoadDashboardDataAsync();
+            }
+        }
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // Reload data when navigating to the dashboard
+        var relativePath = NavigationManager.ToBaseRelativePath(e.Location);
+        if (relativePath == "admin/dashboard" && _currentUser is not null && !_isLoading && relativePath != _lastLoadedPath)
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadDashboardDataAsync();
+            });
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
+    private async Task LoadDashboardDataAsync()
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        _isLoading = true;
+        StateHasChanged(); // Update UI to show loading state
+
+        try
+        {
+            var categories = await CategoryService.GetByUserIdAsync(_currentUser.Id);
+            var posts = await PostService.GetByAuthorIdAsync(_currentUser.Id);
+            var leadMagnets = await LeadMagnetService.GetByUserIdAsync(_currentUser.Id);
+
+            // Initialize stats object if null
+            if (_stats == null)
+            {
+                _stats = new DashboardStatsViewModel();
+            }
+
+            // Calculate statistics
+            _stats.TotalCategories = categories?.Count() ?? 0;
+            _stats.ActiveCategories = categories?.Count(c => c.IsActive) ?? 0;
+            _stats.InactiveCategories = categories?.Count(c => !c.IsActive) ?? 0;
+
+            _stats.TotalPosts = posts?.Count() ?? 0;
+            _stats.PublishedPosts = posts?.Count(p => p.IsPublished) ?? 0;
+            _stats.DraftPosts = posts?.Count(p => !p.IsPublished) ?? 0;
+
+            _stats.TotalLeadMagnets = leadMagnets?.Count() ?? 0;
+            _stats.ActiveLeadMagnets = leadMagnets?.Count(lm => lm.IsActive) ?? 0;
+            _stats.InactiveLeadMagnets = leadMagnets?.Count(lm => !lm.IsActive) ?? 0;
+
+            // Get recent items (ordered by creation date, most recent first)
+            _recentPosts = posts?
+                .OrderByDescending(p => p.CreatedDate)
+                .Take(5)
+                .ToList() ?? new List<PostDTO>();
+
+            _recentLeadMagnets = leadMagnets?
+                .OrderByDescending(lm => lm.CreatedDate)
+                .Take(5)
+                .ToList() ?? new List<LeadMagnetDTO>();
+
+            // Track the path we loaded data for to prevent duplicate loads
+            _lastLoadedPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        }
+        catch (Exception ex)
+        {
+            // Log error - in production, you'd want proper error handling
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+            
+            // Reset stats on error to show empty state
+            _stats = new DashboardStatsViewModel();
+            _recentPosts = new List<PostDTO>();
+            _recentLeadMagnets = new List<LeadMagnetDTO>();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged(); // Ensure UI updates after loading completes
+        }
+    }
+}
