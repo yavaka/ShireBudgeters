@@ -1,0 +1,68 @@
+@using ShireBudgeters.Common.DTOs
+
+<div class="post-preview">
+    @if (Post is null)
+    {
+        <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary">Enter content and switch to Preview to see how your post will look.</RadzenText>
+    }
+    else
+    {
+        <article class="post-preview__article">
+            @if (!string.IsNullOrWhiteSpace(Post.Title))
+            {
+                <h1 class="post-preview__title">@Post.Title</h1>
+            }
+            else
+            {
+                <h1 class="post-preview__title post-preview__title--muted">(No title yet)</h1>
+            }
+
+            <div class="post-preview__meta">
+                @if (!string.IsNullOrWhiteSpace(CategoryName))
+                {
+                    <span class="post-preview__category">@CategoryName</span>
+                }
+                <span class="post-preview__date">@Post.PublicationDate.ToString("MMMM d, yyyy 'at' h:mm tt")</span>
+                @if (Post.IsPublished)
+                {
+                    <span class="post-preview__badge post-preview__badge--published">Published</span>
+                }
+                else
+                {
+                    <span class="post-preview__badge post-preview__badge--draft">Draft</span>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Post.FeaturedImageUrl))
+            {
+                <div class="post-preview__featured-image">
+                    <img src="@Post.FeaturedImageUrl" alt="@Post.Title" loading="lazy" onerror="this.style.display='none'" />
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Post.MetaDescription))
+            {
+                <p class="post-preview__meta-description">@Post.MetaDescription</p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Post.ContentBody))
+            {
+                <div class="post-preview__content rz-typography">
+                    @((MarkupString)Post.ContentBody.Trim())
+                </div>
+            }
+            else
+            {
+                <p class="post-preview__content--empty rz-text-secondary">(No content yet)</p>
+            }
+        </article>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public PostDTO? Post { get; set; }
+
+    [Parameter]
+    public string? CategoryName { get; set; }
+}

@@ -1,47 +1,58 @@
 @using ShireBudgeters.Common.DTOs
 @using ShireBudgeters.BL.Services.Post
 @using static ShireBudgeters.Common.DTOs.AuthDTOs
+@using ShireBudgeters.Components.Pages.Admin.Post.Components
 @inject IPostService PostService
 @inject DialogService DialogService
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
     <EditForm Model="@_postDto" OnSubmit="@OnSubmit">
-        <PostInformationFormFields Post="@_postDto"
-                                   AvailableCategories="@_availableCategories" />
+        <RadzenTabs RenderMode="TabRenderMode.Client">
+            <Tabs>
+                <RadzenTabsItem Text="Edit" Icon="edit" Value="edit">
+                    <PostInformationFormFields Post="@_postDto"
+                                               AvailableCategories="@_availableCategories" />
 
-        <RadzenFieldset Text="Audit Information" class="rz-mt-2">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-                    <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
-                        Created Date:
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2">
-                        @_postDto!.CreatedDate.ToString("g")
-                    </RadzenText>
-                </RadzenStack>
-                @if (_postDto!.ModifiedDate.HasValue)
-                {
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
-                            Modified Date:
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2">
-                            @_postDto.ModifiedDate.Value.ToString("g")
-                        </RadzenText>
+                    <RadzenFieldset Text="Audit Information" class="rz-mt-2">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
+                                    Created Date:
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    @_postDto!.CreatedDate.ToString("g")
+                                </RadzenText>
+                            </RadzenStack>
+                            @if (_postDto!.ModifiedDate.HasValue)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary" Style="min-width: 120px;">
+                                        Modified Date:
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @_postDto.ModifiedDate.Value.ToString("g")
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" class="rz-mt-3">
+                        <RadzenButton Text="Cancel"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Click="@HandleCancel" />
+                        <RadzenButton Text="Update"
+                                     ButtonType="ButtonType.Submit"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     IsBusy="@_isSaving" />
                     </RadzenStack>
-                }
-            </RadzenStack>
-        </RadzenFieldset>
-
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End" class="rz-mt-3">
-            <RadzenButton Text="Cancel" 
-                         ButtonStyle="ButtonStyle.Light" 
-                         Click="@HandleCancel" />
-            <RadzenButton Text="Update" 
-                         ButtonType="ButtonType.Submit" 
-                         ButtonStyle="ButtonStyle.Primary"
-                         IsBusy="@_isSaving" />
-        </RadzenStack>
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Preview" Icon="visibility" Value="preview">
+                    <PostPreview Post="@_postDto"
+                                 CategoryName="@(_postDto?.CategoryId is { } catId ? _availableCategories.FirstOrDefault(c => c.Id == catId)?.Name : null)" />
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
     </EditForm>
 </RadzenStack>
 
