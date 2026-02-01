@@ -1,0 +1,36 @@
+@rendermode InteractiveServer
+
+<div class="search-modal-overlay" @onclick="Close">
+    <div class="search-modal" @onclick:stopPropagation="true" role="dialog" aria-modal="true" aria-label="Search">
+        <div class="search-modal-header">
+            <RadzenIcon Icon="search" class="search-modal-icon" />
+            <input type="search"
+                   class="search-modal-input"
+                   placeholder="Search articles, guides, and more…"
+                   @onkeydown="HandleKeydown"
+                   @bind="_query" />
+            <button type="button" class="search-modal-close" @onclick="Close" aria-label="Close search">
+                <RadzenIcon Icon="close" />
+            </button>
+        </div>
+        <p class="search-modal-hint">Press Escape to close</p>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private string _query = "";
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleKeydown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+            await Close();
+    }
+}

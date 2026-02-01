@@ -1,4 +1,10 @@
+@using Microsoft.AspNetCore.Components.Authorization
+
+@implements IDisposable
+
 @rendermode InteractiveServer
+
+@inject NavigationManager NavigationManager
 
 <RadzenHeader>
     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
@@ -11,10 +17,18 @@
         <RadzenButton Icon="west" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
     </RadzenStack>
     <RadzenPanelMenu>
-        <RadzenPanelMenuItem Text="Dashboard" Path="admin/dashboard" />
-        <RadzenPanelMenuItem Text="Categories" Path="admin/categories" />
-        <RadzenPanelMenuItem Text="Posts" Path="admin/posts" />
-        <RadzenPanelMenuItem Text="Lead Magnets" Path="admin/lead-magnets" />
+        <AuthorizeView>
+            <Authorized>
+                <RadzenPanelMenuItem Text="Dashboard" Path="/admin/dashboard" />
+                <RadzenPanelMenuItem Text="Categories" Path="/admin/categories" />
+                <RadzenPanelMenuItem Text="Posts" Path="/admin/posts" />
+                <RadzenPanelMenuItem Text="Lead Magnets" Path="/admin/lead-magnets" />
+                <RadzenPanelMenuItem Text="Logout" Click="@(_ => NavigationManager.NavigateTo("/Account/Logout", forceLoad: true))"></RadzenPanelMenuItem>
+            </Authorized>
+            <NotAuthorized>
+                <RadzenPanelMenuItem Text="Login" Path="/Account/Login" Icon="login" />
+            </NotAuthorized>
+        </AuthorizeView>
     </RadzenPanelMenu>
 </RadzenSidebar>
 @if (sidebarExpanded)
@@ -23,5 +37,27 @@
 }
 
 @code {
-    bool sidebarExpanded = true;
+
+    private string? currentUrl;
+    private bool sidebarExpanded = true;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
+
+@code {
 }

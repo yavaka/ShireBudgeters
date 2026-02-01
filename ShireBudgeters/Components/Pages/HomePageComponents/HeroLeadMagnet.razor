@@ -1,45 +1,46 @@
 @using Radzen.Blazor
 @inject DialogService DialogService
 
-<RadzenStack Orientation="Orientation.Horizontal"
-             AlignItems="AlignItems.Center"
-             Gap="0.5rem"
-             Wrap="FlexWrap.Wrap"
-             JustifyContent="JustifyContent.Center"
-             class="rz-p-2 rz-mx-auto modern-form-stack">
-
-    @* The prompt is moved above or next to the form on a modern design *@
-    <RadzenText Text="Get Your Free Guide: 10 Ways to Slash Your Spending This Month."
-                TextStyle="TextStyle.Body1"
-                class="rz-mb-0 rz-fw-bold form-prompt" />
-
-    <RadzenTextBox @bind-Value="@EmailAddress"
-                   Placeholder="Your Email Address"
-                   Style="min-width: 250px; height: 50px;"
-                   class="modern-input" />
-
-    <RadzenButton Text="Get Instant Access"
-                  Click="@OnSubscribe"
-                  ButtonStyle="ButtonStyle.Warning"
-                  Variant="Variant.Flat"
-                  Style="height: 50px; font-weight: 600;" />
-
-</RadzenStack>
+@* F. Lead Capture Form — simple email + prominent "Download Now" integrated in hero banner *@
+<div class="hero-lead-form">
+    <EditForm Model="@_model" OnValidSubmit="OnSubmit">
+        <DataAnnotationsValidator />
+        <div class="hero-lead-form-inner">
+            <RadzenTextBox @bind-Value="_model.Email"
+                           Placeholder="Enter your email"
+                           Style="min-width: 280px; height: 56px; border-radius: 8px; font-size: 1rem;"
+                           class="hero-lead-email" />
+            <RadzenButton Text="Download Now"
+                          Type="submit"
+                          ButtonStyle="ButtonStyle.Success"
+                          Variant="Variant.Flat"
+                          Style="height: 56px; min-width: 180px; font-weight: 700; font-size: 1.0625rem; border-radius: 8px;"
+                          class="hero-lead-cta" />
+        </div>
+        <ValidationSummary class="hero-lead-validation" />
+    </EditForm>
+</div>
 
 @code {
-    string EmailAddress { get; set; }
+    private LeadCaptureModel _model = new();
 
-    async Task OnSubscribe()
+    private async Task OnSubmit()
     {
-        if (string.IsNullOrWhiteSpace(EmailAddress) || !EmailAddress.Contains("@"))
+        if (string.IsNullOrWhiteSpace(_model.Email) || !_model.Email.Contains("@"))
         {
-            await DialogService.Alert("Please enter a valid email address.", "Validation Error");
+            await DialogService.Alert("Please enter a valid email address.", "Invalid Email");
             return;
         }
 
-        // Placeholder for subscription logic
-        await DialogService.Alert($"Success! Your guide has been sent to {EmailAddress}.", "Check Your Inbox");
+        // Placeholder for subscription / download logic (e.g. API call, send lead magnet)
+        await DialogService.Alert($"Success! Your guide has been sent to {_model.Email}.", "Check Your Inbox");
+        _model.Email = string.Empty;
+    }
 
-        EmailAddress = string.Empty;
+    private sealed class LeadCaptureModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Email is required.")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Please enter a valid email.")]
+        public string Email { get; set; } = "";
     }
 }

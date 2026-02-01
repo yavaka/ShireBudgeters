@@ -1,0 +1,13 @@
+@inherits LayoutComponentBase
+
+<div class="public-layout">
+    <PublicHeader />
+    <main class="public-layout-body">
+        @Body
+    </main>
+    <footer class="public-footer">
+        Copyright © @DateTime.Now.Year — ShireBudgeters
+    </footer>
+</div>
+
+<RadzenComponents @rendermode="InteractiveServer" />

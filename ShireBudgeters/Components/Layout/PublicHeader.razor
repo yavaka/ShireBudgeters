@@ -1,0 +1,120 @@
+@rendermode InteractiveServer
+@implements IDisposable
+
+@inject NavigationManager NavManager
+
+
+<header class="public-header">
+    <div class="public-header-inner">
+        @* A. Logo — top-left, links to Homepage *@
+        <a href="/" class="public-logo" aria-label="ShireBudgeters Home">
+            <span class="public-logo-text">ShireBudgeters</span>
+        </a>
+
+        @* B. Primary Menu — horizontal nav with dropdowns *@
+        <nav class="public-nav" aria-label="Primary navigation">
+            <ul class="public-nav-list">
+                <li class="public-nav-item">
+                    <button type="button"
+                            class="public-nav-link public-nav-trigger @(IsHome ? "active" : "")"
+                            @onclick="@(() => NavManager.NavigateTo("/"))"
+                            aria-current="@(IsHome ? "page" : null)">
+                        Home
+                    </button>
+                </li>
+                <li class="public-nav-item public-nav-dropdown">
+                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("finance"))" aria-expanded="@(_openDropdown == "finance")" aria-haspopup="true">
+                        Finance <span class="dropdown-chevron">▼</span>
+                    </button>
+                    <div class="public-nav-dropdown-menu @(_openDropdown == "finance" ? "open" : "")" id="dropdown-finance">
+                        <a href="/finance" class="public-nav-dropdown-item">All Finance</a>
+                        <a href="/finance/investing" class="public-nav-dropdown-item">Investing</a>
+                        <a href="/finance/debt-credit" class="public-nav-dropdown-item">Debt & Credit</a>
+                        <a href="/finance/apps" class="public-nav-dropdown-item">Financial Apps</a>
+                    </div>
+                </li>
+                <li class="public-nav-item public-nav-dropdown">
+                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("tech"))" aria-expanded="@(_openDropdown == "tech")" aria-haspopup="true">
+                        Tech <span class="dropdown-chevron">▼</span>
+                    </button>
+                    <div class="public-nav-dropdown-menu @(_openDropdown == "tech" ? "open" : "")" id="dropdown-tech">
+                        <a href="/tech" class="public-nav-dropdown-item">All Tech</a>
+                        <a href="/tech/reviews" class="public-nav-dropdown-item">Reviews</a>
+                        <a href="/tech/gadgets" class="public-nav-dropdown-item">Gadgets</a>
+                        <a href="/tech/how-to" class="public-nav-dropdown-item">How-To</a>
+                    </div>
+                </li>
+                <li class="public-nav-item public-nav-dropdown">
+                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("productivity"))" aria-expanded="@(_openDropdown == "productivity")" aria-haspopup="true">
+                        Productivity <span class="dropdown-chevron">▼</span>
+                    </button>
+                    <div class="public-nav-dropdown-menu @(_openDropdown == "productivity" ? "open" : "")" id="dropdown-productivity">
+                        <a href="/productivity" class="public-nav-dropdown-item">All Productivity</a>
+                        <a href="/productivity/habits" class="public-nav-dropdown-item">Habits & Routines</a>
+                        <a href="/productivity/office" class="public-nav-dropdown-item">Home Office</a>
+                        <a href="/productivity/tools" class="public-nav-dropdown-item">Tools & Templates</a>
+                    </div>
+                </li>
+                <li class="public-nav-item public-nav-dropdown">
+                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("software"))" aria-expanded="@(_openDropdown == "software")" aria-haspopup="true">
+                        Software <span class="dropdown-chevron">▼</span>
+                    </button>
+                    <div class="public-nav-dropdown-menu @(_openDropdown == "software" ? "open" : "")" id="dropdown-software">
+                        <a href="/software" class="public-nav-dropdown-item">All Software</a>
+                        <a href="/software/apps" class="public-nav-dropdown-item">Apps</a>
+                        <a href="/software/compare" class="public-nav-dropdown-item">Comparisons</a>
+                    </div>
+                </li>
+                <li class="public-nav-item public-nav-dropdown">
+                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("other"))" aria-expanded="@(_openDropdown == "other")" aria-haspopup="true">
+                        Other <span class="dropdown-chevron">▼</span>
+                    </button>
+                    <div class="public-nav-dropdown-menu @(_openDropdown == "other" ? "open" : "")" id="dropdown-other">
+                        <a href="/other" class="public-nav-dropdown-item">All Other</a>
+                        <a href="/other/lifestyle" class="public-nav-dropdown-item">Lifestyle</a>
+                        <a href="/other/career" class="public-nav-dropdown-item">Career</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+
+        @* C. Search icon — opens full-screen/modal search *@
+        <button type="button" class="public-search-trigger" @onclick="OpenSearch" aria-label="Open search">
+            <RadzenIcon Icon="search" />
+        </button>
+    </div>
+</header>
+
+@* Dropdown overlay — close dropdown when clicking outside *@
+@if (_openDropdown is not null)
+{
+    <div class="public-nav-dropdown-backdrop" @onclick="@(() => ToggleDropdown(_openDropdown!))" aria-hidden="true"></div>
+}
+
+@* Search overlay — full-screen modal *@
+@if (_searchOpen)
+{
+    <SearchModal OnClose="CloseSearch" />
+}
+
+@code {
+    private string? _openDropdown;
+    private bool _searchOpen;
+
+    private bool IsHome => NavManager.ToBaseRelativePath(NavManager.Uri).Trim('/').Length == 0;
+
+    private void ToggleDropdown(string id) => _openDropdown = _openDropdown == id ? null : id;
+
+    private void OpenSearch() => _searchOpen = true;
+    private void CloseSearch() => _searchOpen = false;
+
+    protected override void OnInitialized() => NavManager.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _openDropdown = null;
+        StateHasChanged();
+    }
+
+    public void Dispose() => NavManager.LocationChanged -= OnLocationChanged;
+}

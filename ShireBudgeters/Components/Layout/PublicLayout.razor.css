@@ -1,0 +1,18 @@
+/* Public layout — body and footer */
+.public-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.public-layout-body {
+    flex: 1;
+}
+
+.public-footer {
+    padding: 1rem 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--rz-base-600, #666);
+    border-top: 1px solid var(--rz-base-300, #e0e0e0);
+}

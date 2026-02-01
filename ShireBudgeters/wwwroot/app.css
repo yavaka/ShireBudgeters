@@ -1,78 +1,131 @@
-/* #region Hero */
+/* #region Hero — High Impact Above the Fold (D. Banner | E. Title & CTA | F. Lead Form) */
 
-/* Custom CSS for a modern, full-width Hero Section */
-
-.hero-modern-container {
-    /* Full width, 70% of viewport height (adjust as needed) */
+/* D. Large Banner/Image — full-width, project-branded background */
+.hero-section {
+    position: relative;
     width: 100%;
-    min-height: 70vh;
-    /* Background Image and Overlay */
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    overflow: hidden;
+}
+
+.hero-banner {
+    position: absolute;
+    inset: 0;
+    background-color: #1a365d;
     background-image: url('/images/hero-bg.jpg');
     background-size: cover;
     background-position: center;
-    position: relative;
-    color: white; /* Default text color is white for contrast */
+    background-repeat: no-repeat;
 }
 
-    /* Darker, subtle overlay for contrast */
-    .hero-modern-container::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        /* Subtle gradient overlay is often more modern than a solid color */
-        background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 100%);
-        z-index: 1;
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.45) 100%);
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    text-align: center;
+}
+
+/* E. Primary Lead Magnet Title & CTA — large, compelling headline */
+.hero-lead-magnet-title {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.75rem;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.hero-lead-magnet-subtitle {
+    font-size: 1.125rem;
+    font-weight: 400;
+    opacity: 0.95;
+    margin: 0 0 2rem;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* F. Lead Capture Form — integrated into banner, prominent CTA */
+.hero-lead-form {
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.hero-lead-form-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    align-items: stretch;
+}
+
+.hero-lead-email {
+    flex: 1;
+    min-width: 200px;
+}
+
+.hero-lead-email input {
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+}
+
+.hero-lead-email input::placeholder {
+    color: #666;
+}
+
+.hero-lead-email input:focus {
+    border-color: var(--rz-success, #2e7d32);
+    outline: none;
+}
+
+.hero-lead-cta {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.hero-lead-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.hero-lead-validation {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.95);
+    list-style: none;
+    padding: 0;
+}
+
+.hero-lead-validation ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (max-width: 540px) {
+    .hero-lead-form-inner {
+        flex-direction: column;
     }
 
-/* Ensure content is above the overlay */
-.rz-row {
-    z-index: 2;
-    position: relative;
-}
+    .hero-lead-email {
+        min-width: 100%;
+    }
 
-/* Modern Typography */
-.hero-title {
-    font-size: 3.5rem !important; /* Larger font size */
-    font-weight: 800 !important; /* Extra bold */
-    letter-spacing: -1.5px; /* Tighter spacing */
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+    .hero-lead-cta {
+        min-width: 100%;
+    }
 }
-
-.hero-subtitle {
-    font-weight: 300 !important; /* Light weight for contrast */
-    opacity: 0.9;
-}
-
-/* Lead Magnet Form Styling */
-.modern-form-stack {
-    max-width: 750px;
-    background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent background */
-    backdrop-filter: blur(5px); /* Modern frosted glass effect */
-    border-radius: 8px;
-    padding: 15px !important;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.form-prompt {
-    /* Keep prompt text clean */
-    color: white;
-}
-
-.modern-input {
-    /* Ensure the input matches the button height */
-    border: none;
-}
-
-/* Radzen Default Overrides (Optional - ensures consistency) */
-/* This ensures the button uses the theme's defined warning color, which should be vibrant */
-.rz-button-warning {
-    /* If your theme uses a dark primary color, use a bright accent (Warning/Success) */
-    text-transform: uppercase;
-}
-
 
 /* #endregion Hero */
 
@@ -140,3 +193,40 @@
 }
 
 /* #endregion Latest Articles Implementation */
+
+/* #region Public Not Found (404) */
+.not-found-public {
+    max-width: 600px;
+    margin: 4rem auto;
+    padding: 2rem 1.5rem;
+    text-align: center;
+}
+
+.not-found-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--rz-text-color, #212121);
+}
+
+.not-found-message {
+    color: var(--rz-base-600, #666);
+    margin-bottom: 1.5rem;
+}
+
+.not-found-link {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    background: var(--rz-primary, #1976d2);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.not-found-link:hover {
+    background: var(--rz-primary-dark, #1565c0);
+    color: #fff;
+}
+
+/* #endregion Public Not Found */
