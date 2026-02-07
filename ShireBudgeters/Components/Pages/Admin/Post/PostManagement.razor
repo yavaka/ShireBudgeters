@@ -25,7 +25,9 @@
                 class="rz-mb-2" />
 
     <PostActionBar OnCreate="@HandleCreate"
-                   OnSearch="@HandleSearch" />
+                   OnSearch="@HandleSearch"
+                   OnFilter="@HandleFilter"
+                   Categories="_allCategories" />
 
     @if (_isLoading)
     {
@@ -117,6 +119,10 @@
     private bool _isLoading = true;
     private bool _hasLoadedData = false;
 
+    private string _searchValue = string.Empty;
+    private string _filterStatus = "All";
+    private int? _filterCategoryId;
+
     private UserInfoDTO? _currentUser;
 
     protected override async Task OnInitializedAsync()
@@ -148,7 +154,7 @@
 
         _isLoading = true;
         _allPosts = await PostService.GetByAuthorIdAsync(_currentUser.Id);
-        _filteredPosts = _allPosts;
+        ApplyFilters();
         _isLoading = false;
     }
 
@@ -193,12 +199,47 @@
 
     private void HandleSearch(string searchValue)
     {
-        _filteredPosts = _allPosts.Where(p =>
-            string.IsNullOrWhiteSpace(searchValue) ||
-            p.Title.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            (p.MetaDescription?.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (p.ContentBody?.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ?? false))
-            .ToList();
+        _searchValue = searchValue ?? string.Empty;
+        ApplyFilters();
+    }
+
+    private void HandleFilter((string Status, int? CategoryId) filter)
+    {
+        _filterStatus = filter.Status ?? "All";
+        _filterCategoryId = filter.CategoryId;
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var query = _allPosts.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(_searchValue))
+        {
+            var search = _searchValue.Trim();
+            query = query.Where(p =>
+                p.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                (p.MetaDescription?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (p.ContentBody?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        if (_filterStatus != "All")
+        {
+            query = _filterStatus switch
+            {
+                "Published" => query.Where(p => p.IsPublished && p.PublicationDate <= DateTime.UtcNow),
+                "Draft" => query.Where(p => !p.IsPublished),
+                "Scheduled" => query.Where(p => p.PublicationDate > DateTime.UtcNow),
+                _ => query
+            };
+        }
+
+        if (_filterCategoryId.HasValue)
+        {
+            query = query.Where(p => p.CategoryId == _filterCategoryId.Value);
+        }
+
+        _filteredPosts = query.ToList();
         StateHasChanged();
     }
 

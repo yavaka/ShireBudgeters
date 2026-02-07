@@ -1,19 +1,50 @@
+@using ShireBudgeters.Common.DTOs
+
 <RadzenCard>
-    <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem" class="rz-mb-3" AlignItems="AlignItems.Center">
-        <RadzenButton Text="Create"
-                      Icon="add"
-                      ButtonStyle="ButtonStyle.Primary"
-                      Click="@(async _ => await OnCreate.InvokeAsync())" />
-        <RadzenFormField Text="Search" Variant="Variant.Outlined" Style="flex: 1; max-width: 400px;">
-            <Start>
-                <RadzenIcon Icon="search" />
-            </Start>
-            <ChildContent>
-                <RadzenTextBox @bind-Value="@_searchValue"
-                               Placeholder="Search posts..."
-                               Change="@HandleSearchChange" />
-            </ChildContent>
-        </RadzenFormField>
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-mb-3">
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem" AlignItems="AlignItems.Center">
+            <RadzenButton Text="Create"
+                          Icon="add"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="@(async _ => await OnCreate.InvokeAsync())" />
+            <RadzenFormField Text="Search" Variant="Variant.Outlined" Style="flex: 1; max-width: 400px;">
+                <Start>
+                    <RadzenIcon Icon="search" />
+                </Start>
+                <ChildContent>
+                    <RadzenTextBox @bind-Value="@_searchValue"
+                                   Placeholder="Search posts..."
+                                   Change="@HandleSearchChange" />
+                </ChildContent>
+            </RadzenFormField>
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+            <RadzenFormField Text="Status" Variant="Variant.Outlined" Style="min-width: 140px;">
+                <ChildContent>
+                    <RadzenDropDown @bind-Value="@_selectedStatus"
+                                    Data="@_statusOptions"
+                                    TextProperty="Text"
+                                    ValueProperty="Value"
+                                    Placeholder="All"
+                                    Style="width: 100%;"
+                                    Change="@HandleFilterChange" />
+                </ChildContent>
+            </RadzenFormField>
+            <RadzenFormField Text="Category" Variant="Variant.Outlined" Style="min-width: 180px;">
+                <ChildContent>
+                    <RadzenDropDown @bind-Value="@_selectedCategoryId"
+                                    Data="@_categoryOptions"
+                                    TextProperty="Text"
+                                    ValueProperty="Value"
+                                    Placeholder="All categories"
+                                    AllowFiltering="true"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    Style="width: 100%;"
+                                    Change="@HandleFilterChange" />
+                </ChildContent>
+            </RadzenFormField>
+        </RadzenStack>
     </RadzenStack>
 </RadzenCard>
 
@@ -24,10 +55,46 @@
     [Parameter]
     public EventCallback<string> OnSearch { get; set; } = default!;
 
+    [Parameter]
+    public EventCallback<(string Status, int? CategoryId)> OnFilter { get; set; } = default!;
+
+    [Parameter]
+    public IEnumerable<CategoryDTO> Categories { get; set; } = Array.Empty<CategoryDTO>();
+
     private string _searchValue = string.Empty;
+    private string _selectedStatus = "All";
+    private int? _selectedCategoryId;
+
+    private static readonly IReadOnlyList<StatusOption> _statusOptions = new[]
+    {
+        new StatusOption("All", "All"),
+        new StatusOption("Published", "Published"),
+        new StatusOption("Draft", "Draft"),
+        new StatusOption("Scheduled", "Scheduled")
+    };
+
+    private IReadOnlyList<CategoryOption> _categoryOptions = new List<CategoryOption> { new("All categories", null) };
+
+    protected override void OnParametersSet()
+    {
+        var options = new List<CategoryOption> { new("All categories", null) };
+        foreach (var c in Categories.OrderBy(x => x.Name))
+        {
+            options.Add(new CategoryOption(c.Name, c.Id));
+        }
+        _categoryOptions = options;
+    }
+
+    private sealed record StatusOption(string Value, string Text);
+    private sealed record CategoryOption(string Text, int? Value);
 
     private async Task HandleSearchChange()
     {
         await OnSearch.InvokeAsync(_searchValue);
+    }
+
+    private async Task HandleFilterChange()
+    {
+        await OnFilter.InvokeAsync((_selectedStatus, _selectedCategoryId));
     }
 }
