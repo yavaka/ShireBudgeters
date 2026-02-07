@@ -62,6 +62,16 @@
                                     <RadzenBadge Text="Scheduled"
                                                  BadgeStyle="BadgeStyle.Info" />
                                 }
+                                @if (post.CategoryId is { } catId)
+                                {
+                                    var category = _allCategories.FirstOrDefault(c => c.Id == catId);
+                                    @if (category != null && !string.IsNullOrWhiteSpace(category.Name))
+                                    {
+                                        <RadzenBadge Text="@category.Name"
+                                                     BadgeStyle="BadgeStyle.Light"
+                                                     Style="@(string.IsNullOrWhiteSpace(category.Color) ? null : $"background-color: {category.Color}; color: white;")" />
+                                    }
+                                }
                             </RadzenStack>
                             <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary">
                                 Published: @post.PublicationDate.ToString("g")
@@ -149,7 +159,7 @@
             return;
         }
 
-        _allCategories = await CategoryService.GetActiveByUserIdAsync(_currentUser.Id);
+        _allCategories = await CategoryService.GetByUserIdAsync(_currentUser.Id);
     }
 
     private async Task HandleCreate()

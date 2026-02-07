@@ -1,4 +1,4 @@
-﻿using ShireBudgeters.BL.Common.Helpers;
+using ShireBudgeters.BL.Common.Helpers;
 using ShireBudgeters.BL.Common.Mappings;
 using ShireBudgeters.Common.DTOs;
 using ShireBudgeters.DA.Repositories.Category;
@@ -220,6 +220,17 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
         if (childCategories.Any())
         {
             throw new InvalidOperationException("Cannot delete category that has child categories. Please delete or reassign child categories first.");
+        }
+
+        // Check if any blog posts or lead magnets reference this category
+        var (postCount, leadMagnetCount) = await _categoryRepository.GetDependentCountsAsync(id, cancellationToken);
+        if (postCount > 0 || leadMagnetCount > 0)
+        {
+            var parts = new List<string>();
+            if (postCount > 0) parts.Add($"{postCount} blog post(s)");
+            if (leadMagnetCount > 0) parts.Add($"{leadMagnetCount} lead magnet(s)");
+            throw new InvalidOperationException(
+                $"Cannot delete category because it is in use by {string.Join(" and ", parts)}. Reassign or remove them first.");
         }
 
         await _categoryRepository.DeleteAsync(category, cancellationToken);

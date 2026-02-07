@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ShireBudgeters.DA.Configurations.Database;
 using ShireBudgeters.DA.Models;
 
@@ -65,5 +65,13 @@ internal class CategoryRepository(ShireBudgetersDbContext context) : Repository<
             .Include(c => c.ChildCategories)
             .Include(c => c.User)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<(int PostCount, int LeadMagnetCount)> GetDependentCountsAsync(int categoryId, CancellationToken cancellationToken = default)
+    {
+        var postCount = await _context.BlogPosts.CountAsync(p => p.CategoryId == categoryId, cancellationToken);
+        var leadMagnetCount = await _context.LeadMagnets.CountAsync(lm => lm.CategoryId == categoryId, cancellationToken);
+        return (postCount, leadMagnetCount);
     }
 }

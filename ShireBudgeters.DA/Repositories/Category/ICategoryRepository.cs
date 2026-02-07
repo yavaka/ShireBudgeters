@@ -1,4 +1,4 @@
-﻿using ShireBudgeters.Common;
+using ShireBudgeters.Common;
 using ShireBudgeters.DA.Models;
 
 namespace ShireBudgeters.DA.Repositories.Category;
@@ -45,4 +45,13 @@ public interface ICategoryRepository : IRepository<CategoryModel, int>
     /// <returns>A collection of child categories that belong to the specified parent category.</returns>
     /// <remarks>Used for navigating category hierarchies and displaying subcategories.</remarks>
     Task<IEnumerable<CategoryModel>> GetChildCategoriesAsync(int parentCategoryId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the number of blog posts and lead magnets that reference the specified category.
+    /// </summary>
+    /// <param name="categoryId">The category identifier.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A tuple of (post count, lead magnet count) that reference the category.</returns>
+    /// <remarks>Used to prevent deleting a category that is still in use.</remarks>
+    Task<(int PostCount, int LeadMagnetCount)> GetDependentCountsAsync(int categoryId, CancellationToken cancellationToken = default);
 }
