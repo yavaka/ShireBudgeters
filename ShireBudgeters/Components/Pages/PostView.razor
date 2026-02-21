@@ -1,0 +1,64 @@
+@page "/post/{Slug}"
+@layout PublicLayout
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using ShireBudgeters.Common.DTOs
+
+@attribute [AllowAnonymous]
+
+<PageTitle>@(_post?.Title ?? "Post")</PageTitle>
+
+@if (_post is null)
+{
+    <div class="not-found-public">
+        <h1 class="not-found-title">Post Not Found</h1>
+        <p class="not-found-message">The article you are looking for does not exist or is not available.</p>
+        <a href="/" class="not-found-link">Return to Home</a>
+    </div>
+}
+else
+{
+    <article class="section-container post-view">
+        @if (!string.IsNullOrWhiteSpace(_post.FeaturedImageUrl))
+        {
+            <div class="post-view-image card-image-placeholder" style="background-image: url('@_post.FeaturedImageUrl');"></div>
+        }
+        <header class="post-view-header">
+            <h1 class="post-view-title">@_post.Title</h1>
+            <p class="post-view-meta">
+                <time datetime="@_post.PublicationDate.ToString("o")">@_post.PublicationDate.ToString("MMMM d, yyyy")</time>
+            </p>
+        </header>
+        <div class="post-view-body">
+            @((MarkupString)(_post.ContentBody ?? string.Empty))
+        </div>
+    </article>
+}
+
+@code {
+    [Parameter]
+    public string Slug { get; set; } = string.Empty;
+
+    [Inject]
+    private ShireBudgeters.BL.Services.Post.IPostService PostService { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private PostDTO? _post;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Slug))
+        {
+            NavigationManager.NavigateTo("/not-found", replace: true);
+            return;
+        }
+
+        _post = await PostService.GetBySlugAsync(Slug);
+        if (_post is null)
+        {
+            NavigationManager.NavigateTo("/not-found", replace: true);
+        }
+    }
+}

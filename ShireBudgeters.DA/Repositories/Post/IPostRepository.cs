@@ -1,4 +1,4 @@
-﻿using ShireBudgeters.Common;
+using ShireBudgeters.Common;
 using ShireBudgeters.DA.Models;
 
 namespace ShireBudgeters.DA.Repositories.Post;
@@ -35,6 +35,16 @@ public interface IPostRepository : IRepository<PostModel, int>
     /// <returns>A collection of published posts in the specified category, ordered by publication date (newest first).</returns>
     /// <remarks>Used for category-specific blog listings. Includes the same published filters as GetPublishedPostsAsync.</remarks>
     Task<IEnumerable<PostModel>> GetPublishedPostsByCategoryAsync(int categoryId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a limited number of recent published posts in a category.
+    /// </summary>
+    /// <param name="categoryId">The identifier of the category to filter by.</param>
+    /// <param name="count">The maximum number of posts to retrieve.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A collection of recent published posts in the specified category, ordered by publication date descending and limited to the specified count.</returns>
+    /// <remarks>Used for homepage thematic blocks. Same filters as GetPublishedPostsByCategoryAsync with Take(count).</remarks>
+    Task<IEnumerable<PostModel>> GetRecentPublishedPostsByCategoryAsync(int categoryId, int count, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves all posts (published and unpublished) for a specific author.

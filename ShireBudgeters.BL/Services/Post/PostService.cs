@@ -1,4 +1,4 @@
-﻿using ShireBudgeters.BL.Common.Helpers;
+using ShireBudgeters.BL.Common.Helpers;
 using ShireBudgeters.BL.Common.Mappings;
 using ShireBudgeters.Common.Common.Constants;
 using ShireBudgeters.Common.DTOs;
@@ -68,6 +68,29 @@ internal class PostService(IPostRepository postRepository, ICategoryRepository c
         }
 
         var posts = await _postRepository.GetPublishedPostsByCategoryAsync(categoryId, cancellationToken);
+        return posts.Select(p => p.ToPostDTO());
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<PostDTO>> GetRecentPublishedPostsByCategoryAsync(int categoryId, int count, CancellationToken cancellationToken = default)
+    {
+        if (count < PostConstants.MinRecentPostsCount)
+        {
+            throw new ArgumentException($"Count must be at least {PostConstants.MinRecentPostsCount}.", nameof(count));
+        }
+
+        if (count > PostConstants.MaxRecentPostsCount)
+        {
+            throw new ArgumentException($"Count cannot exceed {PostConstants.MaxRecentPostsCount}.", nameof(count));
+        }
+
+        var category = await _categoryRepository.GetByIdAsync(categoryId, cancellationToken);
+        if (category == null)
+        {
+            throw new KeyNotFoundException($"Category with ID {categoryId} not found.");
+        }
+
+        var posts = await _postRepository.GetRecentPublishedPostsByCategoryAsync(categoryId, count, cancellationToken);
         return posts.Select(p => p.ToPostDTO());
     }
 

@@ -33,6 +33,11 @@ public interface IPostService
     Task<IEnumerable<PostDTO>> GetPublishedPostsByCategoryAsync(int categoryId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves a limited number of recent published posts in a category.
+    /// </summary>
+    Task<IEnumerable<PostDTO>> GetRecentPublishedPostsByCategoryAsync(int categoryId, int count, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves all posts (published and unpublished) for an author.
     /// </summary>
     Task<IEnumerable<PostDTO>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default);

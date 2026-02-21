@@ -192,7 +192,121 @@
     min-height: 4.5rem; /* Forces consistent height for visual alignment */
 }
 
+.latest-sections {
+    width: 100%;
+}
+
+.latest-block {
+    margin-bottom: 2rem;
+}
+
+.latest-block-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .latest-block-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .latest-block-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.article-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.article-card-content {
+    padding: 1rem 1.25rem;
+}
+
+.article-card-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: var(--rz-primary-light, #e3f2fd);
+    color: var(--rz-primary-dark, #0d47a1);
+    margin-bottom: 0.5rem;
+}
+
+.article-card-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.125rem;
+    line-height: 1.35;
+}
+
+.article-card-date {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--rz-base-600, #666);
+}
+
+.card-image-fallback {
+    background: linear-gradient(135deg, var(--rz-base-200, #eee) 0%, var(--rz-base-300, #e0e0e0) 100%);
+}
+
+.latest-block-empty {
+    grid-column: 1 / -1;
+    color: var(--rz-base-600, #666);
+    font-style: italic;
+    margin: 0;
+}
+
 /* #endregion Latest Articles Implementation */
+
+/* #region Post View (public single post) */
+.post-view {
+    padding-top: 2rem;
+}
+
+.post-view-image {
+    margin-bottom: 1.5rem;
+}
+
+.post-view-header {
+    margin-bottom: 1.5rem;
+}
+
+.post-view-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    line-height: 1.25;
+    color: var(--rz-text-color, #212121);
+}
+
+.post-view-meta {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--rz-base-600, #666);
+}
+
+.post-view-body {
+    line-height: 1.65;
+}
+
+.post-view-body :deep(p) {
+    margin-bottom: 1rem;
+}
+
+.post-view-body :deep(h2) {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+/* #endregion Post View */
 
 /* #region Public Not Found (404) */
 .not-found-public {

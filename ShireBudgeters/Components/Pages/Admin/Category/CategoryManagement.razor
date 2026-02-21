@@ -59,6 +59,13 @@
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" class="rz-mt-2">
                                 <RadzenBadge Text="@(category.IsActive ? "Active" : "Inactive")"
                                              BadgeStyle="@(category.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)" />
+                                @if (category.ParentCategoryId is int parentId)
+                                {
+                                    var parentName = _allCategories.FirstOrDefault(c => c.Id == parentId)?.Name ?? "Unknown";
+                                    <RadzenBadge Text="@parentName"
+                                                 BadgeStyle="BadgeStyle.Light"
+                                                 IsPill="true" />
+                                }
                             </RadzenStack>
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-2">
                                 <RadzenButton Icon="edit"

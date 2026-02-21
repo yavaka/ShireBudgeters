@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ShireBudgeters.DA.Configurations.Database;
 using ShireBudgeters.DA.Models;
 
@@ -52,6 +52,19 @@ internal class PostRepository(ShireBudgetersDbContext context) : Repository<Post
             .Include(p => p.Category)
             .Where(p => p.IsPublished && p.PublicationDate <= DateTime.UtcNow && p.CategoryId == categoryId)
             .OrderByDescending(p => p.PublicationDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<PostModel>> GetRecentPublishedPostsByCategoryAsync(int categoryId, int count, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Category)
+            .Where(p => p.IsPublished && p.PublicationDate <= DateTime.UtcNow && p.CategoryId == categoryId)
+            .OrderByDescending(p => p.PublicationDate)
+            .Take(count)
             .ToListAsync(cancellationToken);
     }
 

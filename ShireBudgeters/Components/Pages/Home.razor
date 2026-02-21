@@ -2,7 +2,9 @@
 @layout PublicLayout
 @rendermode InteractiveServer
 @using ShireBudgeters.Components.Pages.HomePageComponents
+@using ShireBudgeters.Configurations
 @using Microsoft.AspNetCore.Authorization
+@using ShireBudgeters.Common.DTOs
 
 @attribute [AllowAnonymous]
 
@@ -19,3 +21,93 @@
         <HeroLeadMagnet />
     </div>
 </section>
+
+@if (_blocks.Count > 0)
+{
+    <div class="latest-sections">
+        @foreach (var block in _blocks)
+        {
+            <section class="section-container latest-block" aria-label="@block.SectionTitle">
+                <h2 class="section-title-separator">@block.SectionTitle</h2>
+                <div class="latest-block-grid">
+                    @if (block.Posts.Count > 0)
+                    {
+                        @foreach (var post in block.Posts)
+                        {
+                            <ArticleCard Post="post" CategoryName="@block.CategoryName" CategoryColor="@block.CategoryColor" />
+                        }
+                    }
+                    else
+                    {
+                        <p class="latest-block-empty">No articles yet.</p>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}
+
+@code {
+    [Inject]
+    private IConfiguration Configuration { get; set; } = default!;
+
+    [Inject]
+    private ShireBudgeters.BL.Services.Category.ICategoryService CategoryService { get; set; } = default!;
+
+    [Inject]
+    private IServiceScopeFactory ServiceScopeFactory { get; set; } = default!;
+
+    private readonly List<LatestBlockViewModel> _blocks = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var options = Configuration.GetSection("HomePage").Get<HomePageOptions>();
+        if (options?.LatestBlocks == null || options.LatestBlocks.Count == 0)
+        {
+            return;
+        }
+
+        var resolved = new List<(HomePageBlockOption Block, int CategoryId, string CategoryName, string? CategoryColor)>();
+        foreach (var block in options.LatestBlocks)
+        {
+            if (block.CategoryId <= 0)
+            {
+                continue;
+            }
+
+            var category = await CategoryService.GetByIdAsync(block.CategoryId);
+            if (category == null || !category.IsActive)
+            {
+                continue;
+            }
+
+            resolved.Add((block, category.Id, category.Name, category.Color));
+        }
+
+        // One scope per block so each has its own DbContext; allows parallel loading without concurrent context use.
+        var tasks = resolved.Select(async r =>
+        {
+            await using var scope = ServiceScopeFactory.CreateAsyncScope();
+            var postService = scope.ServiceProvider.GetRequiredService<ShireBudgeters.BL.Services.Post.IPostService>();
+            var posts = (await postService.GetRecentPublishedPostsByCategoryAsync(r.CategoryId, 3)).ToList();
+            return new LatestBlockViewModel
+            {
+                SectionTitle = r.Block.SectionTitle,
+                CategoryName = r.CategoryName,
+                CategoryColor = r.CategoryColor,
+                Posts = posts
+            };
+        });
+
+        var results = await Task.WhenAll(tasks);
+        _blocks.AddRange(results);
+    }
+
+    private sealed class LatestBlockViewModel
+    {
+        public string SectionTitle { get; set; } = string.Empty;
+        public string CategoryName { get; set; } = string.Empty;
+        public string? CategoryColor { get; set; }
+        public List<PostDTO> Posts { get; set; } = new();
+    }
+}

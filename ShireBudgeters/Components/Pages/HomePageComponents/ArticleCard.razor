@@ -1,0 +1,36 @@
+@using ShireBudgeters.Common.DTOs
+
+<a href="/post/@Post.Slug" class="article-card-modern article-card-link">
+    <div class="card-image-placeholder @(string.IsNullOrWhiteSpace(Post.FeaturedImageUrl) ? "card-image-fallback" : "")"
+         style="@(string.IsNullOrWhiteSpace(Post.FeaturedImageUrl) ? "" : $"background-image: url('{Post.FeaturedImageUrl}');")"></div>
+    <div class="article-card-content">
+        @if (!string.IsNullOrWhiteSpace(CategoryName))
+        {
+            <span class="article-card-tag" style="@GetCategoryTagStyle()">@CategoryName</span>
+        }
+        <h3 class="article-title-clamp article-card-title">@Post.Title</h3>
+        <time class="article-card-date" datetime="@Post.PublicationDate.ToString("o")">@Post.PublicationDate.ToString("MMMM d, yyyy")</time>
+    </div>
+</a>
+
+@code {
+    [Parameter, EditorRequired]
+    public PostDTO Post { get; set; } = default!;
+
+    [Parameter]
+    public string? CategoryName { get; set; }
+
+    [Parameter]
+    public string? CategoryColor { get; set; }
+
+    private string GetCategoryTagStyle()
+    {
+        if (string.IsNullOrWhiteSpace(CategoryColor))
+            return string.Empty;
+        // Allow only hex (#RGB or #RRGGBB) to avoid injection; use as background with white text for contrast.
+        var color = CategoryColor.Trim();
+        if (color.Length is 4 or 7 && color[0] == '#' && color.Skip(1).All(char.IsAsciiHexDigit))
+            return $"background-color: {color}; color: #fff;";
+        return string.Empty;
+    }
+}
