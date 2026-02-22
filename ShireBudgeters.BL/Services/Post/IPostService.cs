@@ -61,6 +61,14 @@ public interface IPostService
     Task<IEnumerable<PostDTO>> GetRecentPublishedPostsAsync(int count, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Searches published posts by title, slug, meta description, or content body (case-insensitive).
+    /// </summary>
+    /// <param name="searchTerm">The search term. If null or whitespace, returns an empty list.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Matching published posts, ordered by publication date (newest first), limited to a maximum number of results.</returns>
+    Task<IEnumerable<PostDTO>> SearchPublishedPostsAsync(string? searchTerm, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates a new blog post.
     /// </summary>
     Task<PostDTO> CreateAsync(PostDTO postDto, string? userId, CancellationToken cancellationToken = default);

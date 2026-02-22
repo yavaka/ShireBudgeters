@@ -83,6 +83,15 @@ public interface IPostRepository : IRepository<PostModel, int>
     Task<IEnumerable<PostModel>> GetRecentPublishedPostsAsync(int count, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Searches published posts by title, slug, meta description, or content body (case-insensitive).
+    /// </summary>
+    /// <param name="searchTerm">The search term. If null or whitespace, returns an empty list.</param>
+    /// <param name="maxResults">Maximum number of results to return.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Matching published posts, ordered by publication date (newest first).</returns>
+    Task<IEnumerable<PostModel>> SearchPublishedPostsAsync(string? searchTerm, int maxResults, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Checks if a slug already exists (for validation before creating/updating posts).
     /// </summary>
     /// <param name="slug">The slug to check for uniqueness.</param>

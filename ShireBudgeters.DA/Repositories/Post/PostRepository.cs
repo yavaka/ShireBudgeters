@@ -124,6 +124,29 @@ internal class PostRepository(ShireBudgetersDbContext context) : Repository<Post
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<PostModel>> SearchPublishedPostsAsync(string? searchTerm, int maxResults, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm) || maxResults <= 0)
+        {
+            return [];
+        }
+
+        var term = searchTerm.Trim().ToLowerInvariant();
+        return await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Category)
+            .Where(p => p.IsPublished && p.PublicationDate <= DateTime.UtcNow &&
+                (p.Title.ToLower().Contains(term) ||
+                 p.Slug.ToLower().Contains(term) ||
+                 (p.MetaDescription != null && p.MetaDescription.ToLower().Contains(term)) ||
+                 (p.ContentBody != null && p.ContentBody.ToLower().Contains(term))))
+            .OrderByDescending(p => p.PublicationDate)
+            .Take(maxResults)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<bool> CheckSlugExistsAsync(string slug, int? excludePostId = null, CancellationToken cancellationToken = default)
     {
         var query = _dbSet

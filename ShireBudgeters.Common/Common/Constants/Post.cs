@@ -1,4 +1,4 @@
-﻿namespace ShireBudgeters.Common.Common.Constants;
+namespace ShireBudgeters.Common.Common.Constants;
 
 /// <summary>
 /// Constants for post-related validation, security, and configuration values.
@@ -19,6 +19,11 @@ public static class Post
     /// Minimum number of recent posts that can be retrieved in a single request.
     /// </summary>
     public const int MinRecentPostsCount = 1;
+
+    /// <summary>
+    /// Maximum number of posts returned by the public search.
+    /// </summary>
+    public const int MaxSearchResults = 20;
 
     /// <summary>
     /// Regular expression pattern for validating URL-friendly slugs.

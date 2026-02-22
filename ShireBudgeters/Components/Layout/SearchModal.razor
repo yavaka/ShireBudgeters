@@ -1,4 +1,6 @@
 @rendermode InteractiveServer
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.Post
 
 <div class="search-modal-overlay" @onclick="Close">
     <div class="search-modal" @onclick:stopPropagation="true" role="dialog" aria-modal="true" aria-label="Search">
@@ -7,11 +9,44 @@
             <input type="search"
                    class="search-modal-input"
                    placeholder="Search articles, guides, and more…"
+                   value="@_query"
+                   @oninput="OnQueryInput"
                    @onkeydown="HandleKeydown"
-                   @bind="_query" />
+                   autofocus />
             <button type="button" class="search-modal-close" @onclick="Close" aria-label="Close search">
                 <RadzenIcon Icon="close" />
             </button>
+        </div>
+        <div class="search-modal-results">
+            @if (_searching)
+            {
+                <p class="search-modal-status">Searching…</p>
+            }
+            else if (string.IsNullOrWhiteSpace(_query))
+            {
+                <p class="search-modal-hint">Type to search articles and guides</p>
+            }
+            else if (_results.Count == 0)
+            {
+                <p class="search-modal-status">No articles found.</p>
+            }
+            else
+            {
+                <ul class="search-results-list" role="list">
+                    @foreach (var post in _results)
+                    {
+                        <li>
+                            <a href="/post/@post.Slug" class="search-result-link" @onclick="Close">
+                                <span class="search-result-title">@post.Title</span>
+                                @if (!string.IsNullOrWhiteSpace(post.MetaDescription))
+                                {
+                                    <span class="search-result-meta">@post.MetaDescription</span>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
         </div>
         <p class="search-modal-hint">Press Escape to close</p>
     </div>
@@ -21,10 +56,66 @@
     [Parameter]
     public EventCallback OnClose { get; set; }
 
+    [Inject]
+    private IPostService PostService { get; set; } = default!;
+
     private string _query = "";
+    private List<PostDTO> _results = [];
+    private bool _searching;
+    private CancellationTokenSource? _debounceCts;
+    private const int DebounceMs = 300;
+
+    private async Task OnQueryInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? "";
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        try
+        {
+            await Task.Delay(DebounceMs, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_query))
+        {
+            _results = [];
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        _searching = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            var posts = await PostService.SearchPublishedPostsAsync(_query.Trim(), token);
+            if (!token.IsCancellationRequested)
+            {
+                _results = posts.ToList();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore
+        }
+        finally
+        {
+            if (!token.IsCancellationRequested)
+            {
+                _searching = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
 
     private async Task Close()
     {
+        _debounceCts?.Cancel();
         await OnClose.InvokeAsync();
     }
 

@@ -146,6 +146,13 @@ internal class PostService(IPostRepository postRepository, ICategoryRepository c
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<PostDTO>> SearchPublishedPostsAsync(string? searchTerm, CancellationToken cancellationToken = default)
+    {
+        var posts = await _postRepository.SearchPublishedPostsAsync(searchTerm, PostConstants.MaxSearchResults, cancellationToken);
+        return posts.Select(p => p.ToPostDTO());
+    }
+
+    /// <inheritdoc/>
     public async Task<PostDTO> CreateAsync(PostDTO postDto, string? userId, CancellationToken cancellationToken = default)
     {
         // Validate required fields
