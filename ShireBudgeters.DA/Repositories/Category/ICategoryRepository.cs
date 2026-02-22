@@ -20,6 +20,21 @@ public interface ICategoryRepository : IRepository<CategoryModel, int>
     Task<IEnumerable<CategoryModel>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves a category by its URL slug (e.g. "finance", "finance/investing").
+    /// </summary>
+    /// <param name="slug">The unique slug of the category.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The category with the specified slug, or null if not found.</returns>
+    Task<CategoryModel?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all active categories (no user filter). Used for public navbar and category pages.
+    /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>All active categories ordered by name.</returns>
+    Task<IEnumerable<CategoryModel>> GetAllActiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves only active categories for a specific user.
     /// </summary>
     /// <param name="userId">The identifier of the user who owns the categories.</param>

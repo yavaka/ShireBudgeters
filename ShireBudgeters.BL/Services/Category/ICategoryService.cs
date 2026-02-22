@@ -13,6 +13,16 @@ public interface ICategoryService
     Task<CategoryDTO?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets a category by its URL slug (e.g. "finance", "finance/investing").
+    /// </summary>
+    Task<CategoryDTO?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all active categories (no user filter). Used for public navbar and category pages.
+    /// </summary>
+    Task<IEnumerable<CategoryDTO>> GetAllActiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets all categories for a specific user.
     /// </summary>
     Task<IEnumerable<CategoryDTO>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default);

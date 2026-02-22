@@ -38,6 +38,14 @@ public interface IPostService
     Task<IEnumerable<PostDTO>> GetRecentPublishedPostsByCategoryAsync(int categoryId, int count, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves published posts for a parent category and all its child categories, ordered by publication date (newest first).
+    /// </summary>
+    /// <param name="parentCategoryId">The parent category identifier.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Published posts in the parent or any of its subcategories, ordered by publication date descending.</returns>
+    Task<IEnumerable<PostDTO>> GetPublishedPostsByCategoryAndDescendantsAsync(int parentCategoryId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves all posts (published and unpublished) for an author.
     /// </summary>
     Task<IEnumerable<PostDTO>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default);

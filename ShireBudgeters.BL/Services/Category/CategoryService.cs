@@ -20,6 +20,20 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
     }
 
     /// <inheritdoc/>
+    public async Task<CategoryDTO?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        var category = await _categoryRepository.GetBySlugAsync(slug, cancellationToken);
+        return category?.ToCategoryDTO();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<CategoryDTO>> GetAllActiveAsync(CancellationToken cancellationToken = default)
+    {
+        var categories = await _categoryRepository.GetAllActiveAsync(cancellationToken);
+        return categories.Select(c => c.ToCategoryDTO());
+    }
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<CategoryDTO>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
     {
         var categories = await _categoryRepository.GetByUserIdAsync(userId, cancellationToken);
@@ -182,6 +196,7 @@ internal class CategoryService(ICategoryRepository categoryRepository) : ICatego
 
         // Update properties
         existingCategory.Name = sanitizedName;
+        existingCategory.Slug = string.IsNullOrWhiteSpace(categoryDto.Slug) ? null : categoryDto.Slug.Trim();
         existingCategory.Description = sanitizedDescription;
         existingCategory.Color = categoryDto.Color;
         existingCategory.ParentCategoryId = categoryDto.ParentCategoryId;

@@ -1,4 +1,4 @@
-﻿namespace ShireBudgeters.Common.DTOs;
+namespace ShireBudgeters.Common.DTOs;
 
 /// <summary>
 /// Data Transfer Object for category information.
@@ -16,6 +16,12 @@ public class CategoryDTO
     /// Gets or sets the name of the category.
     /// </summary>
     public required string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the URL-friendly slug for the category (e.g. "finance", "finance/investing").
+    /// Used for public routes and navbar; must be unique when set.
+    /// </summary>
+    public string? Slug { get; set; }
 
     /// <summary>
     /// Gets or sets the description of the category.

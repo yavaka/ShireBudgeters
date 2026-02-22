@@ -25,6 +25,29 @@ internal class CategoryRepository(ShireBudgetersDbContext context) : Repository<
     }
 
     /// <inheritdoc/>
+    public async Task<CategoryModel?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(slug))
+            return null;
+        return await _dbSet
+            .AsNoTracking()
+            .Include(c => c.ParentCategory)
+            .Include(c => c.ChildCategories)
+            .FirstOrDefaultAsync(c => c.Slug == slug, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<CategoryModel>> GetAllActiveAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(c => c.ParentCategory)
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<CategoryModel>> GetActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default)
     {
         return await _dbSet

@@ -69,6 +69,24 @@ internal class PostRepository(ShireBudgetersDbContext context) : Repository<Post
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<PostModel>> GetPublishedPostsByCategoryIdsAsync(IEnumerable<int> categoryIds, CancellationToken cancellationToken = default)
+    {
+        var idList = categoryIds.ToList();
+        if (idList.Count == 0)
+        {
+            return [];
+        }
+
+        return await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Category)
+            .Where(p => p.IsPublished && p.PublicationDate <= DateTime.UtcNow && p.CategoryId.HasValue && idList.Contains(p.CategoryId.Value))
+            .OrderByDescending(p => p.PublicationDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<PostModel>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
     {
         return await _dbSet

@@ -47,6 +47,15 @@ public interface IPostRepository : IRepository<PostModel, int>
     Task<IEnumerable<PostModel>> GetRecentPublishedPostsByCategoryAsync(int categoryId, int count, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves published posts filtered by any of the given category IDs, ordered by publication date (newest first).
+    /// </summary>
+    /// <param name="categoryIds">The category identifiers to filter by (e.g. parent + child category IDs).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A collection of published posts in any of the specified categories, ordered by publication date descending.</returns>
+    /// <remarks>Used for parent category pages that show posts from the parent and all subcategories.</remarks>
+    Task<IEnumerable<PostModel>> GetPublishedPostsByCategoryIdsAsync(IEnumerable<int> categoryIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves all posts (published and unpublished) for a specific author.
     /// </summary>
     /// <param name="authorId">The identifier of the author.</param>

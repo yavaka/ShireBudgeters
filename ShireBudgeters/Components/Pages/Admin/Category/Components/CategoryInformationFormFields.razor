@@ -11,6 +11,15 @@
             </ChildContent>
         </RadzenFormField>
 
+        <RadzenFormField Text="Slug (URL)" class="rz-col-12" Hint="URL path for this category, e.g. finance or finance/investing. Used for public category pages and navbar.">
+            <ChildContent>
+                <RadzenTextBox @bind-Value="Category.Slug"
+                               Placeholder="e.g. finance, tech, finance/investing"
+                               MaxLength="120"
+                               class="w-100" />
+            </ChildContent>
+        </RadzenFormField>
+
         <RadzenFormField Text="Description" class="rz-col-12">
             <ChildContent>
                 <RadzenTextArea @bind-Value="Category.Description"

@@ -1,0 +1,117 @@
+@rendermode InteractiveServer
+@using ShireBudgeters.Components.Pages.HomePageComponents
+@using ShireBudgeters.Common.DTOs
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [AllowAnonymous]
+
+<main>
+    @if (_showNoContent)
+    {
+        @if (!string.IsNullOrWhiteSpace(_sectionTitle))
+        {
+            <section class="section-container latest-block" aria-label="@_sectionTitle">
+                <h2 class="section-title-separator">@_sectionTitle</h2>
+                <p class="latest-block-empty">No content for this category yet.</p>
+            </section>
+        }
+        else
+        {
+            <p class="latest-block-empty">No content for this category yet.</p>
+        }
+    }
+    else if (_category != null)
+    {
+        <section class="section-container latest-block" aria-label="@_sectionTitle">
+            <h2 class="section-title-separator">@_sectionTitle</h2>
+            <div class="latest-block-grid">
+                @if (_posts.Count > 0)
+                {
+                    @foreach (var post in _posts)
+                    {
+                        var catInfo = post.CategoryId.HasValue && _categoryLookup.TryGetValue(post.CategoryId.Value, out var c) ? c : (Name: (string?)null, Color: (string?)null);
+                        <ArticleCard Post="post" CategoryName="@catInfo.Name" CategoryColor="@catInfo.Color" />
+                    }
+                }
+                else
+                {
+                    <p class="latest-block-empty">No articles yet.</p>
+                }
+            </div>
+        </section>
+    }
+</main>
+
+@code {
+    [Parameter, EditorRequired]
+    public string RoutePath { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? PageTitleOverride { get; set; }
+
+    [Inject]
+    private IServiceScopeFactory ServiceScopeFactory { get; set; } = default!;
+
+    private bool _showNoContent;
+    private CategoryDTO? _category;
+    private string _sectionTitle = string.Empty;
+    private List<PostDTO> _posts = new();
+    private Dictionary<int, (string? Name, string? Color)> _categoryLookup = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var slug = NormalizeRouteToSlug(RoutePath);
+        if (string.IsNullOrWhiteSpace(slug))
+        {
+            _showNoContent = true;
+            _sectionTitle = PageTitleOverride ?? string.Empty;
+            return;
+        }
+
+        await using (var scope = ServiceScopeFactory.CreateAsyncScope())
+        {
+            var categoryService = scope.ServiceProvider.GetRequiredService<ShireBudgeters.BL.Services.Category.ICategoryService>();
+            var postService = scope.ServiceProvider.GetRequiredService<ShireBudgeters.BL.Services.Post.IPostService>();
+
+            var category = await categoryService.GetBySlugAsync(slug);
+            if (category == null || !category.IsActive)
+            {
+                _showNoContent = true;
+                _sectionTitle = PageTitleOverride ?? string.Empty;
+                return;
+            }
+
+            _category = category;
+            _sectionTitle = PageTitleOverride ?? category.Name;
+            var categoryId = category.Id;
+
+            var children = (await categoryService.GetChildCategoriesAsync(categoryId)).ToList();
+            if (children.Count > 0)
+            {
+                _posts = (await postService.GetPublishedPostsByCategoryAndDescendantsAsync(categoryId)).ToList();
+            }
+            else
+            {
+                _posts = (await postService.GetPublishedPostsByCategoryAsync(categoryId)).ToList();
+            }
+
+            var distinctCategoryIds = _posts.Where(p => p.CategoryId.HasValue).Select(p => p.CategoryId!.Value).Distinct().ToList();
+            _categoryLookup = new Dictionary<int, (string? Name, string? Color)>();
+            foreach (var id in distinctCategoryIds)
+            {
+                var cat = await categoryService.GetByIdAsync(id);
+                if (cat != null)
+                {
+                    _categoryLookup[id] = (cat.Name, cat.Color);
+                }
+            }
+        }
+    }
+
+    private static string NormalizeRouteToSlug(string routePath)
+    {
+        if (string.IsNullOrWhiteSpace(routePath))
+            return string.Empty;
+        return routePath.Trim().TrimStart('/').Trim();
+    }
+}

@@ -1,4 +1,4 @@
-﻿using ShireBudgeters.DA.Common.Audit;
+using ShireBudgeters.DA.Common.Audit;
 
 namespace ShireBudgeters.DA.Models;
 
@@ -19,6 +19,11 @@ public class CategoryModel : AuditableModel
     /// Gets or sets the name of the category.
     /// </summary>
     public required string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the URL-friendly slug for the category (e.g. "finance", "finance/investing").
+    /// </summary>
+    public string? Slug { get; set; }
 
     /// <summary>
     /// Gets or sets the description of the category.

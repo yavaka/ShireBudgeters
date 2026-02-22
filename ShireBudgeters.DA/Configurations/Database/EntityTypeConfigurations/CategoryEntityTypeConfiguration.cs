@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ShireBudgeters.DA.Models;
 
@@ -19,6 +19,9 @@ internal class CategoryEntityTypeConfiguration : IEntityTypeConfiguration<Catego
         builder.Property(e => e.Name)
             .IsRequired()
             .HasMaxLength(100);
+
+        builder.Property(e => e.Slug)
+            .HasMaxLength(120);
 
         builder.Property(e => e.Description)
             .HasMaxLength(500);
@@ -64,6 +67,11 @@ internal class CategoryEntityTypeConfiguration : IEntityTypeConfiguration<Catego
 
         builder.HasIndex(e => e.ParentCategoryId)
             .HasDatabaseName("IX_Categories_ParentCategoryId");
+
+        builder.HasIndex(e => e.Slug)
+            .IsUnique()
+            .HasDatabaseName("IX_Categories_Slug")
+            .HasFilter("[Slug] IS NOT NULL");
 
         builder.HasIndex(e => new { e.UserId, e.Name })
             .IsUnique()

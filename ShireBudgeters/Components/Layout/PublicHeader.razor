@@ -1,8 +1,11 @@
 @rendermode InteractiveServer
 @implements IDisposable
+@using ShireBudgeters.Configurations
+@using ShireBudgeters.Common.DTOs
 
 @inject NavigationManager NavManager
-
+@inject IConfiguration Configuration
+@inject IServiceScopeFactory ServiceScopeFactory
 
 <header class="public-header">
     <div class="public-header-inner">
@@ -11,7 +14,7 @@
             <span class="public-logo-text">ShireBudgeters</span>
         </a>
 
-        @* B. Primary Menu — horizontal nav with dropdowns *@
+        @* B. Primary Menu — horizontal nav with dropdowns (from appsettings + active categories) *@
         <nav class="public-nav" aria-label="Primary navigation">
             <ul class="public-nav-list">
                 <li class="public-nav-item">
@@ -22,59 +25,21 @@
                         Home
                     </button>
                 </li>
-                <li class="public-nav-item public-nav-dropdown">
-                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("finance"))" aria-expanded="@(_openDropdown == "finance")" aria-haspopup="true">
-                        Finance <span class="dropdown-chevron">▼</span>
-                    </button>
-                    <div class="public-nav-dropdown-menu @(_openDropdown == "finance" ? "open" : "")" id="dropdown-finance">
-                        <a href="/finance" class="public-nav-dropdown-item">All Finance</a>
-                        <a href="/finance/investing" class="public-nav-dropdown-item">Investing</a>
-                        <a href="/finance/debt-credit" class="public-nav-dropdown-item">Debt & Credit</a>
-                        <a href="/finance/apps" class="public-nav-dropdown-item">Financial Apps</a>
-                    </div>
-                </li>
-                <li class="public-nav-item public-nav-dropdown">
-                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("tech"))" aria-expanded="@(_openDropdown == "tech")" aria-haspopup="true">
-                        Tech <span class="dropdown-chevron">▼</span>
-                    </button>
-                    <div class="public-nav-dropdown-menu @(_openDropdown == "tech" ? "open" : "")" id="dropdown-tech">
-                        <a href="/tech" class="public-nav-dropdown-item">All Tech</a>
-                        <a href="/tech/reviews" class="public-nav-dropdown-item">Reviews</a>
-                        <a href="/tech/gadgets" class="public-nav-dropdown-item">Gadgets</a>
-                        <a href="/tech/how-to" class="public-nav-dropdown-item">How-To</a>
-                    </div>
-                </li>
-                <li class="public-nav-item public-nav-dropdown">
-                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("productivity"))" aria-expanded="@(_openDropdown == "productivity")" aria-haspopup="true">
-                        Productivity <span class="dropdown-chevron">▼</span>
-                    </button>
-                    <div class="public-nav-dropdown-menu @(_openDropdown == "productivity" ? "open" : "")" id="dropdown-productivity">
-                        <a href="/productivity" class="public-nav-dropdown-item">All Productivity</a>
-                        <a href="/productivity/habits" class="public-nav-dropdown-item">Habits & Routines</a>
-                        <a href="/productivity/office" class="public-nav-dropdown-item">Home Office</a>
-                        <a href="/productivity/tools" class="public-nav-dropdown-item">Tools & Templates</a>
-                    </div>
-                </li>
-                <li class="public-nav-item public-nav-dropdown">
-                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("software"))" aria-expanded="@(_openDropdown == "software")" aria-haspopup="true">
-                        Software <span class="dropdown-chevron">▼</span>
-                    </button>
-                    <div class="public-nav-dropdown-menu @(_openDropdown == "software" ? "open" : "")" id="dropdown-software">
-                        <a href="/software" class="public-nav-dropdown-item">All Software</a>
-                        <a href="/software/apps" class="public-nav-dropdown-item">Apps</a>
-                        <a href="/software/compare" class="public-nav-dropdown-item">Comparisons</a>
-                    </div>
-                </li>
-                <li class="public-nav-item public-nav-dropdown">
-                    <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown("other"))" aria-expanded="@(_openDropdown == "other")" aria-haspopup="true">
-                        Other <span class="dropdown-chevron">▼</span>
-                    </button>
-                    <div class="public-nav-dropdown-menu @(_openDropdown == "other" ? "open" : "")" id="dropdown-other">
-                        <a href="/other" class="public-nav-dropdown-item">All Other</a>
-                        <a href="/other/lifestyle" class="public-nav-dropdown-item">Lifestyle</a>
-                        <a href="/other/career" class="public-nav-dropdown-item">Career</a>
-                    </div>
-                </li>
+                @foreach (var item in _navItems)
+                {
+                    <li class="public-nav-item public-nav-dropdown">
+                        <button type="button" class="public-nav-link public-nav-trigger" @onclick="@(() => ToggleDropdown(item.Slug))" aria-expanded="@(_openDropdown == item.Slug)" aria-haspopup="true">
+                            @item.Name <span class="dropdown-chevron">▼</span>
+                        </button>
+                        <div class="public-nav-dropdown-menu @(_openDropdown == item.Slug ? "open" : "")" id="dropdown-@item.Slug">
+                            <a href="/@item.Slug" class="public-nav-dropdown-item">All @item.Name</a>
+                            @foreach (var child in item.Children)
+                            {
+                                <a href="/@child.Slug" class="public-nav-dropdown-item">@child.Name</a>
+                            }
+                        </div>
+                    </li>
+                }
             </ul>
         </nav>
 
@@ -100,6 +65,7 @@
 @code {
     private string? _openDropdown;
     private bool _searchOpen;
+    private List<NavCategoryItem> _navItems = new();
 
     private bool IsHome => NavManager.ToBaseRelativePath(NavManager.Uri).Trim('/').Length == 0;
 
@@ -108,7 +74,32 @@
     private void OpenSearch() => _searchOpen = true;
     private void CloseSearch() => _searchOpen = false;
 
-    protected override void OnInitialized() => NavManager.LocationChanged += OnLocationChanged;
+    protected override async Task OnInitializedAsync()
+    {
+        NavManager.LocationChanged += OnLocationChanged;
+
+        var options = Configuration.GetSection("Navbar").Get<NavbarOptions>();
+        var slugs = options?.CategorySlugs ?? new List<string>();
+        if (slugs.Count == 0)
+            return;
+
+        await using (var scope = ServiceScopeFactory.CreateAsyncScope())
+        {
+            var categoryService = scope.ServiceProvider.GetRequiredService<ShireBudgeters.BL.Services.Category.ICategoryService>();
+            var allActive = (await categoryService.GetAllActiveAsync()).ToList();
+            var bySlug = allActive.Where(c => !string.IsNullOrWhiteSpace(c.Slug)).ToDictionary(c => c.Slug!, c => c);
+            _navItems = new List<NavCategoryItem>();
+            foreach (var slug in slugs)
+            {
+                if (string.IsNullOrWhiteSpace(slug) || !bySlug.TryGetValue(slug.Trim(), out var cat))
+                    continue;
+                if (cat.ParentCategoryId.HasValue)
+                    continue;
+                var children = allActive.Where(c => c.ParentCategoryId == cat.Id).OrderBy(c => c.Name).ToList();
+                _navItems.Add(new NavCategoryItem(cat.Slug!, cat.Name, children.Select(c => new NavCategoryItem(c.Slug ?? "", c.Name, new List<NavCategoryItem>())).ToList()));
+            }
+        }
+    }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
@@ -117,4 +108,6 @@
     }
 
     public void Dispose() => NavManager.LocationChanged -= OnLocationChanged;
+
+    private sealed record NavCategoryItem(string Slug, string Name, List<NavCategoryItem> Children);
 }

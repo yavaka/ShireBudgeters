@@ -14,6 +14,7 @@ internal static class CategoryDTOMappings
         {
             Id = category.Id,
             Name = category.Name,
+            Slug = category.Slug,
             Description = category.Description,
             Color = category.Color,
             UserId = category.UserId,
@@ -35,6 +36,7 @@ internal static class CategoryDTOMappings
         {
             Id = categoryDto.Id,
             Name = categoryDto.Name,
+            Slug = categoryDto.Slug,
             Description = categoryDto.Description,
             Color = categoryDto.Color,
             UserId = categoryDto.UserId,

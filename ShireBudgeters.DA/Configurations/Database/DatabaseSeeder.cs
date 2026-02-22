@@ -133,6 +133,7 @@ public class DatabaseSeeder(
             new()
             {
                 Name = "Budgeting",
+                Slug = "budgeting",
                 Description = "Tips and strategies for effective budgeting",
                 Color = "#4CAF50",
                 UserId = userId,
@@ -143,6 +144,7 @@ public class DatabaseSeeder(
             new()
             {
                 Name = "Saving Money",
+                Slug = "saving-money",
                 Description = "Ways to save money and build wealth",
                 Color = "#2196F3",
                 UserId = userId,
@@ -153,6 +155,7 @@ public class DatabaseSeeder(
             new()
             {
                 Name = "Investing",
+                Slug = "investing",
                 Description = "Investment strategies and advice",
                 Color = "#FF9800",
                 UserId = userId,

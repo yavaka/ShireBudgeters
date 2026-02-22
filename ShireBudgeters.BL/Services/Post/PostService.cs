@@ -95,6 +95,26 @@ internal class PostService(IPostRepository postRepository, ICategoryRepository c
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<PostDTO>> GetPublishedPostsByCategoryAndDescendantsAsync(int parentCategoryId, CancellationToken cancellationToken = default)
+    {
+        var parent = await _categoryRepository.GetByIdAsync(parentCategoryId, cancellationToken);
+        if (parent == null)
+        {
+            throw new KeyNotFoundException($"Category with ID {parentCategoryId} not found.");
+        }
+
+        var childCategories = await _categoryRepository.GetChildCategoriesAsync(parentCategoryId, cancellationToken);
+        var categoryIds = new List<int> { parentCategoryId };
+        foreach (var child in childCategories)
+        {
+            categoryIds.Add(child.Id);
+        }
+
+        var posts = await _postRepository.GetPublishedPostsByCategoryIdsAsync(categoryIds, cancellationToken);
+        return posts.Select(p => p.ToPostDTO());
+    }
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<PostDTO>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
     {
         var posts = await _postRepository.GetByAuthorIdAsync(authorId, cancellationToken);
