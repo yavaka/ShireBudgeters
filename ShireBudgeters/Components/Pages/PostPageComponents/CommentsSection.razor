@@ -1,0 +1,171 @@
+@using Radzen
+@using Radzen.Blazor
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.Comment
+@using System.ComponentModel.DataAnnotations
+
+<section class="post-view-comments" aria-label="Comments">
+    <RadzenText TextStyle="TextStyle.Subtitle2" class="post-view-comments-title">Comments</RadzenText>
+
+    @if (_comments.Count > 0)
+    {
+        <ul class="post-view-comments-list">
+            @foreach (var comment in _comments)
+            {
+                <li class="post-view-comment-item">
+                    <div class="post-view-comment-meta">
+                        <span class="post-view-comment-author">@comment.AuthorName</span>
+                        <span class="post-view-comment-date" aria-hidden="true">·</span>
+                        <time datetime="@comment.CreatedDate.ToString("o")" class="post-view-comment-date">@comment.CreatedDate.ToString("MMMM d, yyyy 'at' h:mm tt")</time>
+                    </div>
+                    <div class="post-view-comment-body">@comment.ContentBody</div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="post-view-comments-empty">No comments yet. Be the first to share your thoughts!</p>
+    }
+
+    <div class="post-view-comments-form">
+        <EditForm Model="@_formModel" OnValidSubmit="SubmitComment">
+            <DataAnnotationsValidator />
+            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                <RadzenFormField Text="Name" class="rz-col-12">
+                    <ChildContent>
+                        <RadzenTextBox @bind-Value="_formModel.AuthorName"
+                                       Placeholder="Your name"
+                                       Style="width: 100%;"
+                                       class="w-100" />
+                    </ChildContent>
+                </RadzenFormField>
+                <RadzenFormField Text="Email" class="rz-col-12">
+                    <ChildContent>
+                        <RadzenTextBox @bind-Value="_formModel.AuthorEmail"
+                                       Placeholder="your@email.com"
+                                       Style="width: 100%;"
+                                       class="w-100" />
+                    </ChildContent>
+                </RadzenFormField>
+                <RadzenFormField Text="Comment" class="rz-col-12">
+                    <ChildContent>
+                        <RadzenTextArea @bind-Value="_formModel.ContentBody"
+                                        Placeholder="Share your thoughts..."
+                                        Rows="4"
+                                        Style="width: 100%;"
+                                        class="w-100" />
+                    </ChildContent>
+                </RadzenFormField>
+                <RadzenButton ButtonType="ButtonType.Submit"
+                              Text="Post Comment"
+                              Variant="Variant.Flat"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Disabled="@_isSubmitting" />
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" ShowIcon="true">
+                        @_errorMessage
+                    </RadzenAlert>
+                }
+            </RadzenStack>
+        </EditForm>
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public int PostId { get; set; }
+
+    [Inject]
+    private ICommentService CommentService { get; set; } = default!;
+
+    [Inject]
+    private DialogService DialogService { get; set; } = default!;
+
+    private List<CommentDTO> _comments = new();
+    private CommentFormModel _formModel = new();
+    private bool _isSubmitting;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (PostId > 0)
+        {
+            await LoadCommentsAsync();
+        }
+    }
+
+    private async Task LoadCommentsAsync()
+    {
+        try
+        {
+            var comments = await CommentService.GetByPostIdAsync(PostId);
+            _comments = comments.ToList();
+        }
+        catch
+        {
+            _comments = new List<CommentDTO>();
+        }
+    }
+
+    private async Task SubmitComment()
+    {
+        _errorMessage = string.Empty;
+        _isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var dto = new CreateCommentDTO
+            {
+                PostId = PostId,
+                AuthorName = _formModel.AuthorName!,
+                AuthorEmail = _formModel.AuthorEmail!,
+                ContentBody = _formModel.ContentBody!
+            };
+
+            await CommentService.CreateAsync(dto);
+
+            _formModel = new CommentFormModel();
+            await LoadCommentsAsync();
+        }
+        catch (KeyNotFoundException)
+        {
+            _errorMessage = "The post was not found or is not available for comments.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch (Exception)
+        {
+            _errorMessage = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            _isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private sealed class CommentFormModel
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
+        public string? AuthorName { get; set; }
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters.")]
+        public string? AuthorEmail { get; set; }
+
+        [Required(ErrorMessage = "Comment is required.")]
+        [StringLength(10000, ErrorMessage = "Comment cannot exceed 10,000 characters.")]
+        public string? ContentBody { get; set; }
+    }
+}

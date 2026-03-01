@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using ShireBudgeters.Common.DTOs
 @using ShireBudgeters.Components.Pages.HomePageComponents
+@using ShireBudgeters.Components.Pages.PostPageComponents
 
 @attribute [AllowAnonymous]
 
@@ -101,6 +102,8 @@ else
                         </div>
                     </section>
                 }
+                @* F4b. Comments *@
+                <CommentsSection PostId="_post.Id" />
                 @* F5. Affiliate callouts placeholder *@
                 @if (_affiliateCalloutHtml != null)
                 {
