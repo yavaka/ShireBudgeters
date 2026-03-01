@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Authorization
 @using ShireBudgeters.BL.Services.Identity
+@using System.Reflection
 @using static ShireBudgeters.Common.DTOs.AuthDTOs
 
 @inherits LayoutComponentBase
@@ -14,7 +15,7 @@
         </div>
     </RadzenBody>
     <RadzenFooter>
-        Copyright © @(DateTime.Now.Date.Year) - ShireBudgeters
+        Copyright © @(DateTime.Now.Date.Year) - ShireBudgeters | v@(AppVersion)
     </RadzenFooter>
 </RadzenLayout>
 
@@ -25,3 +26,10 @@
 </div>
 
 <RadzenComponents @rendermode="InteractiveServer" />
+
+@code {
+        private string AppVersion => Assembly.GetEntryAssembly()?
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion
+        ?? "unknown";
+}

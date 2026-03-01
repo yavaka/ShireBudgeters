@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @using ShireBudgeters.Configurations
+@using System.Reflection
 
 @inject IConfiguration Configuration
 
@@ -29,7 +30,7 @@
             </div>
         }
         @* M. Copyright notice — year and brand name *@
-        <p class="public-footer-copyright">© @DateTime.Now.Year ShireBudgeters. All rights reserved.</p>
+        <p class="public-footer-copyright">© @DateTime.Now.Year ShireBudgeters. All rights reserved. v@(AppVersion)</p>
     </footer>
 </div>
 
@@ -37,6 +38,11 @@
 
 @code {
     private List<(string Slug, string Label, string Url, MarkupString Svg)> _socialLinks = new();
+    private string AppVersion =>
+        Assembly.GetEntryAssembly()?
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion
+        ?? "unknown";
 
     protected override void OnInitialized()
     {
