@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ShireBudgeters.Common;
@@ -8,6 +8,7 @@ using ShireBudgeters.DA.Repositories;
 using ShireBudgeters.DA.Repositories.Category;
 using ShireBudgeters.DA.Repositories.LeadMagnet;
 using ShireBudgeters.DA.Repositories.Post;
+using ShireBudgeters.DA.Repositories.PostComment;
 
 namespace ShireBudgeters.DA.Configurations;
 
@@ -61,5 +62,6 @@ public static class DataAccessConfigurations
         => services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>))
                    .AddScoped<ICategoryRepository, CategoryRepository>()
                    .AddScoped<IPostRepository, PostRepository>()
+                   .AddScoped<IPostCommentRepository, PostCommentRepository>()
                    .AddScoped<ILeadMagnetRepository, LeadMagnetRepository>();
 }

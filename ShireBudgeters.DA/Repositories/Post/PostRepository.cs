@@ -12,54 +12,45 @@ namespace ShireBudgeters.DA.Repositories.Post;
 internal class PostRepository(ShireBudgetersDbContext context) : Repository<PostModel, int>(context), IPostRepository
 {
     /// <inheritdoc/>
-    public override async Task<PostModel?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
+    public override async Task<PostModel?> GetByIdAsync(int id, CancellationToken cancellationToken = default) 
+        => await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
-    }
 
     /// <inheritdoc/>
-    public async Task<PostModel?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
+    public async Task<PostModel?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default) 
+        => await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
                 .ThenInclude(c => c!.ParentCategory)
             .FirstOrDefaultAsync(p => p.Slug == slug, cancellationToken);
-    }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<PostModel>> GetPublishedPostsAsync(CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
+    public async Task<IEnumerable<PostModel>> GetPublishedPostsAsync(CancellationToken cancellationToken = default) 
+        => await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
             .Where(p => p.IsPublished && p.PublicationDate <= DateTime.UtcNow)
             .OrderByDescending(p => p.PublicationDate)
             .ToListAsync(cancellationToken);
-    }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<PostModel>> GetPublishedPostsByCategoryAsync(int categoryId, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
+    public async Task<IEnumerable<PostModel>> GetPublishedPostsByCategoryAsync(int categoryId, CancellationToken cancellationToken = default) 
+        => await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
             .Where(p => p.IsPublished && p.PublicationDate <= DateTime.UtcNow && p.CategoryId == categoryId)
             .OrderByDescending(p => p.PublicationDate)
             .ToListAsync(cancellationToken);
-    }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<PostModel>> GetRecentPublishedPostsByCategoryAsync(int categoryId, int count, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
+    public async Task<IEnumerable<PostModel>> GetRecentPublishedPostsByCategoryAsync(int categoryId, int count, CancellationToken cancellationToken = default) 
+        => await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
@@ -67,7 +58,6 @@ internal class PostRepository(ShireBudgetersDbContext context) : Repository<Post
             .OrderByDescending(p => p.PublicationDate)
             .Take(count)
             .ToListAsync(cancellationToken);
-    }
 
     /// <inheritdoc/>
     public async Task<IEnumerable<PostModel>> GetPublishedPostsByCategoryIdsAsync(IEnumerable<int> categoryIds, CancellationToken cancellationToken = default)
@@ -88,33 +78,28 @@ internal class PostRepository(ShireBudgetersDbContext context) : Repository<Post
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<PostModel>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
+    public async Task<IEnumerable<PostModel>> GetByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default) 
+        => await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
             .Where(p => p.AuthorId == authorId)
             .OrderByDescending(p => p.PublicationDate)
             .ToListAsync(cancellationToken);
-    }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<PostModel>> GetDraftsByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
+    public async Task<IEnumerable<PostModel>> GetDraftsByAuthorIdAsync(string authorId, CancellationToken cancellationToken = default) 
+        => await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
             .Where(p => p.AuthorId == authorId && !p.IsPublished)
             .OrderByDescending(p => p.CreatedDate)
             .ToListAsync(cancellationToken);
-    }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<PostModel>> GetRecentPublishedPostsAsync(int count, CancellationToken cancellationToken = default)
-    {
-        return await _dbSet
+    public async Task<IEnumerable<PostModel>> GetRecentPublishedPostsAsync(int count, CancellationToken cancellationToken = default) 
+        => await _dbSet
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
@@ -122,7 +107,6 @@ internal class PostRepository(ShireBudgetersDbContext context) : Repository<Post
             .OrderByDescending(p => p.PublicationDate)
             .Take(count)
             .ToListAsync(cancellationToken);
-    }
 
     /// <inheritdoc/>
     public async Task<IEnumerable<PostModel>> SearchPublishedPostsAsync(string? searchTerm, int maxResults, CancellationToken cancellationToken = default)
