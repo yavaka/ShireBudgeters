@@ -25,7 +25,7 @@ internal class CommentEntityTypeConfiguration : IEntityTypeConfiguration<Comment
             .HasMaxLength(255);
 
         builder.Property(e => e.ContentBody)
-            .HasMaxLength(255);
+            .HasColumnType("nvarchar(MAX)");
 
         builder.Property(e => e.CreatedDate)
             .IsRequired()

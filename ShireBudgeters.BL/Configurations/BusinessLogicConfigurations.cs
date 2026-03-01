@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ShireBudgeters.BL.Services.Category;
+using ShireBudgeters.BL.Services.Comment;
 using ShireBudgeters.BL.Services.Identity;
 using ShireBudgeters.BL.Services.LeadMagnet;
 using ShireBudgeters.BL.Services.Post;
@@ -115,5 +116,6 @@ public static class BusinessLogicConfigurations
         => services.AddScoped<IIdentityService, IdentityService>()
                    .AddScoped<ICategoryService, CategoryService>()
                    .AddScoped<IPostService, PostService>()
+                   .AddScoped<ICommentService, CommentService>()
                    .AddScoped<ILeadMagnetService, LeadMagnetService>();
 }
