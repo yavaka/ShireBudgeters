@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
 @using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.Components.Pages.HomePageComponents
 
 @attribute [AllowAnonymous]
 
@@ -18,19 +19,133 @@
 }
 else
 {
-    <article class="section-container post-view">
+    <article class="post-view">
+        <div class="section-container post-view-inner">
+        @* Row 1: Featured image on its own row (full width) *@
         @if (!string.IsNullOrWhiteSpace(_post.FeaturedImageUrl))
         {
-            <div class="post-view-image card-image-placeholder" style="background-image: url('@_post.FeaturedImageUrl');"></div>
+            <div class="post-view-image-row">
+                <div class="post-view-image card-image-placeholder" style="background-image: url('@_post.FeaturedImageUrl');"></div>
+            </div>
         }
-        <header class="post-view-header">
-            <h1 class="post-view-title">@_post.Title</h1>
-            <p class="post-view-meta">
-                <time datetime="@_post.PublicationDate.ToString("o")">@_post.PublicationDate.ToString("MMMM d, yyyy")</time>
-            </p>
-        </header>
-        <div class="post-view-body">
-            @((MarkupString)(_post.ContentBody ?? string.Empty))
+
+        <div class="post-view-layout">
+            <div class="post-view-content">
+                @* Header (title + meta) next to sidebar *@
+                <header class="post-view-header">
+                    @* B. Breadcrumbs *@
+                    @if (_post.BreadcrumbItems.Count > 0)
+                    {
+                        <nav class="post-view-breadcrumb" aria-label="Breadcrumb">
+                            <RadzenBreadCrumb>
+                                @foreach (var item in _post.BreadcrumbItems)
+                                {
+                                    <RadzenBreadCrumbItem Text="@item.Text" Path="@item.Url" />
+                                }
+                            </RadzenBreadCrumb>
+                        </nav>
+                    }
+                    @* C. Article title (H1) *@
+                    <h1 class="post-view-title">@_post.Title</h1>
+                    @* D. Meta and E. Share in one line: date · reading time · Share: [buttons] *@
+                    <div class="post-view-meta-line">
+                        <span class="post-view-meta">
+                            <time datetime="@_post.PublicationDate.ToString("o")">@_post.PublicationDate.ToString("MMMM d, yyyy")</time>
+                            <span class="post-view-meta-sep" aria-hidden="true">·</span>
+                            <span>@(_readingMinutes) min read</span>
+                        </span>
+                        <span class="post-view-meta-sep" aria-hidden="true">·</span>
+                        <div class="post-view-share">
+                            <a href="@GetTwitterShareUrl()" target="_blank" rel="noopener noreferrer" class="post-view-share-link post-view-share-link--x" aria-label="Share on X (Twitter)">
+                                @SocialIconSvg(IconPathX)
+                            </a>
+                            <a href="@GetFacebookShareUrl()" target="_blank" rel="noopener noreferrer" class="post-view-share-link post-view-share-link--facebook" aria-label="Share on Facebook">
+                                @SocialIconSvg(IconPathFacebook)
+                            </a>
+                            <a href="@GetLinkedInShareUrl()" target="_blank" rel="noopener noreferrer" class="post-view-share-link post-view-share-link--linkedin" aria-label="Share on LinkedIn">
+                                @SocialIconSvg(IconPathLinkedIn)
+                            </a>
+                            <a href="@GetPinterestShareUrl()" target="_blank" rel="noopener noreferrer" class="post-view-share-link post-view-share-link--pinterest" aria-label="Share on Pinterest">
+                                @SocialIconSvg(IconPathPinterest)
+                            </a>
+                        </div>
+                    </div>
+                </header>
+                @* F2. Table of Contents — show when we have 2+ headings *@
+                @if (_tocEntries.Count >= 2)
+                {
+                    <nav class="post-view-toc" aria-label="On this page">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" class="post-view-toc-title">On this page</RadzenText>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            @foreach (var entry in _tocEntries)
+                            {
+                                <a href="#@entry.Id" class="post-view-toc-link">@entry.Text</a>
+                            }
+                        </RadzenStack>
+                    </nav>
+                }
+                @* F3. Main article body (with IDs on H2/H3 for ToC) *@
+                <div class="post-view-body">
+                    @((MarkupString)(_bodyWithIds))
+                </div>
+                @* F4. Related articles *@
+                @if (_relatedPosts.Count > 0)
+                {
+                    <section class="post-view-related" aria-label="Related articles">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" class="post-view-related-title">Related articles</RadzenText>
+                        <div class="latest-block-grid">
+                            @foreach (var p in _relatedPosts)
+                            {
+                                <ArticleCard Post="p" CategoryName="@_categoryName" CategoryColor="@_categoryColor" />
+                            }
+                        </div>
+                    </section>
+                }
+                @* F5. Affiliate callouts placeholder *@
+                @if (_affiliateCalloutHtml != null)
+                {
+                    <div class="post-view-affiliate-callout">
+                        @((MarkupString)_affiliateCalloutHtml)
+                    </div>
+                }
+            </div>
+
+            <aside class="post-view-sidebar" aria-label="Sidebar">
+                @* G1. Category lead magnet *@
+                @if (_categoryLeadMagnet != null)
+                {
+                    <div class="post-view-sidebar-card">
+                        <RadzenText TextStyle="TextStyle.Subtitle2">@_categoryLeadMagnet.Title</RadzenText>
+                        <EditForm Model="@_leadMagnetModel" FormName="@_leadMagnetFormName" OnValidSubmit="SubmitLeadMagnet">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem" class="rz-mt-2">
+                                <RadzenTextBox @bind-Value="_leadMagnetModel.Email" Placeholder="Your email" Style="width: 100%;" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Get it" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Primary" Style="width: 100%;" />
+                            </RadzenStack>
+                        </EditForm>
+                    </div>
+                }
+                @* G2. Affiliate promotions placeholder *@
+                @if (_sidebarAffiliateHtml != null)
+                {
+                    <div class="post-view-sidebar-card post-view-sidebar-affiliate">
+                        @((MarkupString)_sidebarAffiliateHtml)
+                    </div>
+                }
+                @* G3. Most read in category *@
+                @if (_sidebarPosts.Count > 0)
+                {
+                    <div class="post-view-sidebar-card">
+                        <RadzenText TextStyle="TextStyle.Subtitle2">More in @_categoryName</RadzenText>
+                        <ul class="post-view-sidebar-list">
+                            @foreach (var p in _sidebarPosts)
+                            {
+                                <li><a href="/post/@p.Slug" class="post-view-sidebar-link">@p.Title</a></li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </aside>
+        </div>
         </div>
     </article>
 }
@@ -43,9 +158,30 @@ else
     private ShireBudgeters.BL.Services.Post.IPostService PostService { get; set; } = default!;
 
     [Inject]
+    private ShireBudgeters.BL.Services.LeadMagnet.ILeadMagnetService LeadMagnetService { get; set; } = default!;
+
+    [Inject]
+    private ShireBudgeters.BL.Services.Category.ICategoryService CategoryService { get; set; } = default!;
+
+    [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
+    [Inject]
+    private IConfiguration Configuration { get; set; } = default!;
+
     private PostDTO? _post;
+    private int _readingMinutes;
+    private List<(string Id, string Text)> _tocEntries = new();
+    private string _bodyWithIds = string.Empty;
+    private List<PostDTO> _relatedPosts = new();
+    private List<PostDTO> _sidebarPosts = new();
+    private string _categoryName = string.Empty;
+    private string? _categoryColor;
+    private LeadMagnetDTO? _categoryLeadMagnet;
+    private string? _affiliateCalloutHtml;
+    private string? _sidebarAffiliateHtml;
+    private LeadMagnetFormModel _leadMagnetModel = new();
+    private string _leadMagnetFormName = "sidebar-lead";
 
     protected override async Task OnInitializedAsync()
     {
@@ -59,6 +195,147 @@ else
         if (_post is null)
         {
             NavigationManager.NavigateTo("/not-found", replace: true);
+            return;
         }
+
+        _readingMinutes = GetReadingTimeMinutes(_post.ContentBody);
+        _leadMagnetFormName = $"sidebar-lead-{_post.Id}";
+        var (entries, bodyWithIds) = BuildTocAndBodyWithIds(_post.ContentBody ?? string.Empty);
+        _tocEntries = entries;
+        _bodyWithIds = bodyWithIds;
+
+        var categoryId = _post.CategoryId;
+        if (categoryId.HasValue)
+        {
+            // Run sequentially: DbContext is not thread-safe; parallel calls would cause InvalidOperationException.
+            var recent = (await PostService.GetRecentPublishedPostsByCategoryAsync(categoryId.Value, 6))
+                .Where(p => !string.Equals(p.Slug, _post!.Slug, StringComparison.OrdinalIgnoreCase))
+                .Take(5)
+                .ToList();
+            _relatedPosts = recent;
+            _sidebarPosts = recent;
+
+            var leadMagnets = (await LeadMagnetService.GetActiveByCategoryIdAsync(categoryId.Value)).ToList();
+            _categoryLeadMagnet = leadMagnets.FirstOrDefault();
+
+            var category = await CategoryService.GetByIdAsync(categoryId.Value);
+            _categoryName = category?.Name ?? "this category";
+            _categoryColor = category?.Color;
+        }
+
+        LoadAffiliatePlaceholders();
     }
+
+    private void LoadAffiliatePlaceholders()
+    {
+        var section = Configuration.GetSection("PostPage");
+        _affiliateCalloutHtml = section["AffiliateCalloutHtml"]?.ToString();
+        _sidebarAffiliateHtml = section["SidebarAffiliateHtml"]?.ToString();
+    }
+
+    private async Task SubmitLeadMagnet()
+    {
+        if (_categoryLeadMagnet == null || string.IsNullOrWhiteSpace(_leadMagnetModel.Email)) return;
+        if (_categoryLeadMagnet.FormActionUrl != null)
+        {
+            NavigationManager.NavigateTo($"{_categoryLeadMagnet.FormActionUrl}?email={Uri.EscapeDataString(_leadMagnetModel.Email)}", forceLoad: true);
+            return;
+        }
+        _leadMagnetModel.Email = string.Empty;
+        await Task.CompletedTask;
+    }
+
+    private static (List<(string Id, string Text)> Entries, string BodyWithIds) BuildTocAndBodyWithIds(string html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+            return (new List<(string Id, string Text)>(), html);
+
+        // Remove first H1 from body so the title shows only once (in the header)
+        var firstH1 = System.Text.RegularExpressions.Regex.Match(html, @"<h1[^>]*>[\s\S]*?</h1>");
+        if (firstH1.Success)
+            html = html.Remove(firstH1.Index, firstH1.Length);
+
+        var entries = new List<(string Id, string Text)>();
+        var usedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        string IdFromText(string text)
+        {
+            var slug = System.Text.RegularExpressions.Regex.Replace(text, @"[^a-z0-9]+", "-", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim('-').ToLowerInvariant();
+            if (string.IsNullOrEmpty(slug)) slug = "section";
+            var id = "toc-" + slug;
+            var baseId = id;
+            var n = 1;
+            while (usedIds.Contains(id))
+            {
+                id = baseId + "-" + n++;
+            }
+            usedIds.Add(id);
+            return id;
+        }
+
+        var pattern = @"<(h[23])[^>]*>([^<]*)</\1>";
+        var bodyWithIds = System.Text.RegularExpressions.Regex.Replace(html, pattern, m =>
+        {
+            var tag = m.Groups[1].Value;
+            var inner = m.Groups[2].Value;
+            var text = System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(inner, "<[^>]+>", "").Trim());
+            var id = IdFromText(text);
+            entries.Add((id, text));
+            return $"<{tag} id=\"{id}\">{inner}</{tag}>";
+        });
+
+        return (entries, bodyWithIds);
+    }
+
+    private sealed class LeadMagnetFormModel
+    {
+        public string Email { get; set; } = "";
+    }
+
+    private static int GetReadingTimeMinutes(string? contentBody)
+    {
+        if (string.IsNullOrWhiteSpace(contentBody)) return 0;
+        var stripped = System.Text.RegularExpressions.Regex.Replace(contentBody, "<[^>]+>", " ");
+        var words = System.Text.RegularExpressions.Regex.Matches(stripped, @"\S+").Count;
+        const int wordsPerMinute = 200;
+        return Math.Max(1, (int)Math.Ceiling((double)words / wordsPerMinute));
+    }
+
+    private string GetTwitterShareUrl()
+    {
+        if (_post is null) return "#";
+        var url = Uri.EscapeDataString(NavigationManager.Uri);
+        var text = Uri.EscapeDataString(_post.Title);
+        return $"https://twitter.com/intent/tweet?url={url}&text={text}";
+    }
+
+    private string GetFacebookShareUrl()
+    {
+        if (_post is null) return "#";
+        var url = Uri.EscapeDataString(NavigationManager.Uri);
+        return $"https://www.facebook.com/sharer/sharer.php?u={url}";
+    }
+
+    private string GetLinkedInShareUrl()
+    {
+        if (_post is null) return "#";
+        var url = Uri.EscapeDataString(NavigationManager.Uri);
+        return $"https://www.linkedin.com/sharing/share-offsite/?url={url}";
+    }
+
+    private string GetPinterestShareUrl()
+    {
+        if (_post is null) return "#";
+        var url = Uri.EscapeDataString(NavigationManager.Uri);
+        var description = Uri.EscapeDataString(_post.Title);
+        return $"https://pinterest.com/pin/create/button/?url={url}&description={description}";
+    }
+
+    // Real brand SVG icons (same paths as footer in PublicLayout; Pinterest from Simple Icons)
+    private static MarkupString SocialIconSvg(string path) => new MarkupString($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"{path}\"/></svg>");
+
+    private const string IconPathX = "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z";
+    private const string IconPathFacebook = "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z";
+    private const string IconPathLinkedIn = "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z";
+    private const string IconPathPinterest = "M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607 0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017 0z";
 }

@@ -76,5 +76,16 @@ public class PostDTO
     /// Gets or sets the date and time when the post was last modified.
     /// </summary>
     public DateTime? ModifiedDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the display name of the author (e.g. "Jane Doe") for article header meta.
+    /// </summary>
+    public string? AuthorDisplayName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ordered breadcrumb items for navigation (e.g. Home > Category > Article Title).
+    /// The last item is the current page and has Url set to null.
+    /// </summary>
+    public List<BreadcrumbItemDTO> BreadcrumbItems { get; set; } = new();
 }
 

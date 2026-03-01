@@ -28,6 +28,7 @@ internal class PostRepository(ShireBudgetersDbContext context) : Repository<Post
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Category)
+                .ThenInclude(c => c!.ParentCategory)
             .FirstOrDefaultAsync(p => p.Slug == slug, cancellationToken);
     }
 
