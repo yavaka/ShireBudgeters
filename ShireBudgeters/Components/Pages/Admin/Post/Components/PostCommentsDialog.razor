@@ -1,0 +1,203 @@
+@using Radzen
+@using Radzen.Blazor
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.Comment
+@using System.ComponentModel.DataAnnotations
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    <RadzenText TextStyle="TextStyle.Subtitle1">Comments for: @PostTitle</RadzenText>
+
+    @* Add new comment *@
+    @if (_showAddForm)
+    {
+    <RadzenFieldset Text="Add Comment">
+        <EditForm Model="@_createModel" OnValidSubmit="CreateComment">
+            <DataAnnotationsValidator />
+            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                <RadzenFormField Text="Name" class="rz-col-12">
+                    <ChildContent>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenTextBox @bind-Value="_createModel.AuthorName" Placeholder="Author name" Style="width: 100%;" />
+                            <ValidationMessage For="@(() => _createModel.AuthorName)" class="comment-validation-error" />
+                        </RadzenStack>
+                    </ChildContent>
+                </RadzenFormField>
+                <RadzenFormField Text="Email" class="rz-col-12">
+                    <ChildContent>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenTextBox @bind-Value="_createModel.AuthorEmail" Placeholder="author@example.com" Style="width: 100%;" />
+                            <ValidationMessage For="@(() => _createModel.AuthorEmail)" class="comment-validation-error" />
+                        </RadzenStack>
+                    </ChildContent>
+                </RadzenFormField>
+                <RadzenFormField Text="Comment" class="rz-col-12">
+                    <ChildContent>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenTextArea @bind-Value="_createModel.ContentBody" Placeholder="Comment text..." Rows="3" Style="width: 100%;" />
+                            <ValidationMessage For="@(() => _createModel.ContentBody)" class="comment-validation-error" />
+                        </RadzenStack>
+                    </ChildContent>
+                </RadzenFormField>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Text="Create" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" IsBusy="@_isCreating" />
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => _showAddForm = false)" />
+                </RadzenStack>
+            </RadzenStack>
+        </EditForm>
+    </RadzenFieldset>
+    }
+    else
+    {
+        <RadzenButton Text="Add Comment" Icon="add" ButtonStyle="ButtonStyle.Light" Click="@(() => _showAddForm = true)" />
+    }
+
+    @* Comments list *@
+    @if (_comments.Count == 0)
+    {
+        <RadzenText Text="No comments yet." TextStyle="TextStyle.Body2" class="rz-text-secondary" />
+    }
+    else
+    {
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+            @foreach (var comment in _comments)
+            {
+                <RadzenCard class="post-comments-dialog-card">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-fw-bold">@comment.AuthorName</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary">@comment.AuthorEmail</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary">·</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-text-secondary">@comment.CreatedDate.ToString("g")</RadzenText>
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Title="Edit" Click="@(() => HandleEdit(comment))" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Title="Delete" Click="@(() => HandleDelete(comment))" />
+                            </RadzenStack>
+                        </RadzenStack>
+                        <RadzenText TextStyle="TextStyle.Body2">@Truncate(comment.ContentBody, 200)</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public int PostId { get; set; }
+
+    [Parameter]
+    public string PostTitle { get; set; } = string.Empty;
+
+    [Inject]
+    private ICommentService CommentService { get; set; } = default!;
+
+    [Inject]
+    private DialogService DialogService { get; set; } = default!;
+
+    private List<CommentDTO> _comments = new();
+    private bool _showAddForm;
+    private bool _isCreating;
+    private CreateCommentFormModel _createModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCommentsAsync();
+    }
+
+    private async Task LoadCommentsAsync()
+    {
+        var comments = await CommentService.GetByPostIdAsync(PostId);
+        _comments = comments.ToList();
+        StateHasChanged();
+    }
+
+    private static string Truncate(string? text, int maxLength)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        if (text.Length <= maxLength) return text;
+        return text[..maxLength] + "...";
+    }
+
+    private async Task CreateComment()
+    {
+        _isCreating = true;
+        try
+        {
+            var dto = new CreateCommentDTO
+            {
+                PostId = PostId,
+                AuthorName = _createModel.AuthorName!,
+                AuthorEmail = _createModel.AuthorEmail!,
+                ContentBody = _createModel.ContentBody!
+            };
+            await CommentService.CreateAsync(dto);
+            _createModel = new CreateCommentFormModel();
+            _showAddForm = false;
+            await LoadCommentsAsync();
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error", new AlertOptions { OkButtonText = "OK" });
+        }
+        finally
+        {
+            _isCreating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleEdit(CommentDTO comment)
+    {
+        var result = await DialogService.OpenAsync<EditCommentDialog>("Edit Comment",
+            new Dictionary<string, object?> { { "Comment", comment } },
+            new DialogOptions { Width = "500px" });
+
+        if (result is CommentDTO)
+        {
+            await LoadCommentsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleDelete(CommentDTO comment)
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete the comment from {comment.AuthorName}?",
+            "Delete Comment",
+            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        try
+        {
+            await CommentService.DeleteAsync(comment.Id);
+            await LoadCommentsAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error", new AlertOptions { OkButtonText = "OK" });
+        }
+    }
+
+    private sealed class CreateCommentFormModel
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "Name must be 1–100 characters.")]
+        public string? AuthorName { get; set; }
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters.")]
+        public string? AuthorEmail { get; set; }
+
+        [Required(ErrorMessage = "Comment is required.")]
+        [StringLength(4000, MinimumLength = 1, ErrorMessage = "Comment must be 1–4000 characters.")]
+        public string? ContentBody { get; set; }
+    }
+}

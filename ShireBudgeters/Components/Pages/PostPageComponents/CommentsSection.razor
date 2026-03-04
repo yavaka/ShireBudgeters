@@ -18,7 +18,7 @@
                         <span class="post-view-comment-date" aria-hidden="true">·</span>
                         <time datetime="@comment.CreatedDate.ToString("o")" class="post-view-comment-date">@comment.CreatedDate.ToString("MMMM d, yyyy 'at' h:mm tt")</time>
                     </div>
-                    <div class="post-view-comment-body">@comment.ContentBody</div>
+                    <div class="post-view-comment-body">@((MarkupString)(comment.ContentBody ?? string.Empty))</div>
                 </li>
             }
         </ul>
@@ -34,27 +34,36 @@
             <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
                 <RadzenFormField Text="Name" class="rz-col-12">
                     <ChildContent>
-                        <RadzenTextBox @bind-Value="_formModel.AuthorName"
-                                       Placeholder="Your name"
-                                       Style="width: 100%;"
-                                       class="w-100" />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenTextBox @bind-Value="_formModel.AuthorName"
+                                           Placeholder="Your name"
+                                           Style="width: 100%;"
+                                           class="w-100" />
+                            <ValidationMessage For="@(() => _formModel.AuthorName)" class="comment-validation-error" />
+                        </RadzenStack>
                     </ChildContent>
                 </RadzenFormField>
                 <RadzenFormField Text="Email" class="rz-col-12">
                     <ChildContent>
-                        <RadzenTextBox @bind-Value="_formModel.AuthorEmail"
-                                       Placeholder="your@email.com"
-                                       Style="width: 100%;"
-                                       class="w-100" />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenTextBox @bind-Value="_formModel.AuthorEmail"
+                                           Placeholder="your@email.com"
+                                           Style="width: 100%;"
+                                           class="w-100" />
+                            <ValidationMessage For="@(() => _formModel.AuthorEmail)" class="comment-validation-error" />
+                        </RadzenStack>
                     </ChildContent>
                 </RadzenFormField>
                 <RadzenFormField Text="Comment" class="rz-col-12">
                     <ChildContent>
-                        <RadzenTextArea @bind-Value="_formModel.ContentBody"
-                                        Placeholder="Share your thoughts..."
-                                        Rows="4"
-                                        Style="width: 100%;"
-                                        class="w-100" />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenTextArea @bind-Value="_formModel.ContentBody"
+                                            Placeholder="Share your thoughts..."
+                                            Rows="4"
+                                            Style="width: 100%;"
+                                            class="w-100" />
+                            <ValidationMessage For="@(() => _formModel.ContentBody)" class="comment-validation-error" />
+                        </RadzenStack>
                     </ChildContent>
                 </RadzenFormField>
                 <RadzenButton ButtonType="ButtonType.Submit"
@@ -156,7 +165,7 @@
     private sealed class CommentFormModel
     {
         [Required(ErrorMessage = "Name is required.")]
-        [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "Name must be 1–100 characters.")]
         public string? AuthorName { get; set; }
 
         [Required(ErrorMessage = "Email is required.")]
@@ -165,7 +174,7 @@
         public string? AuthorEmail { get; set; }
 
         [Required(ErrorMessage = "Comment is required.")]
-        [StringLength(10000, ErrorMessage = "Comment cannot exceed 10,000 characters.")]
+        [StringLength(4000, MinimumLength = 1, ErrorMessage = "Comment must be 1–4000 characters.")]
         public string? ContentBody { get; set; }
     }
 }

@@ -1,0 +1,95 @@
+@using Radzen
+@using Radzen.Blazor
+@using ShireBudgeters.Common.DTOs
+@using ShireBudgeters.BL.Services.Comment
+@using System.ComponentModel.DataAnnotations
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.5rem">
+    @if (_model != null)
+    {
+    <EditForm Model="@_model" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <RadzenFormField Text="Name" class="rz-col-12">
+            <ChildContent>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenTextBox @bind-Value="_model!.AuthorName" Placeholder="Author name" Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _model.AuthorName)" class="comment-validation-error" />
+                </RadzenStack>
+            </ChildContent>
+        </RadzenFormField>
+        <RadzenFormField Text="Email" class="rz-col-12">
+            <ChildContent>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenTextBox @bind-Value="_model!.AuthorEmail" Placeholder="author@example.com" Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _model.AuthorEmail)" class="comment-validation-error" />
+                </RadzenStack>
+            </ChildContent>
+        </RadzenFormField>
+        <RadzenFormField Text="Comment" class="rz-col-12">
+            <ChildContent>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenTextArea @bind-Value="_model!.ContentBody" Placeholder="Comment text..." Rows="4" Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _model.ContentBody)" class="comment-validation-error" />
+                </RadzenStack>
+            </ChildContent>
+        </RadzenFormField>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+            <RadzenButton Text="Save" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" IsBusy="@_isSaving" />
+        </RadzenStack>
+    </EditForm>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public CommentDTO Comment { get; set; } = default!;
+
+    [Inject]
+    private ICommentService CommentService { get; set; } = default!;
+
+    [Inject]
+    private DialogService DialogService { get; set; } = default!;
+
+    private CommentDTO? _model;
+    private bool _isSaving;
+
+    protected override void OnParametersSet()
+    {
+        if (Comment == null) return;
+        _model = new CommentDTO
+        {
+            Id = Comment.Id,
+            PostId = Comment.PostId,
+            AuthorName = Comment.AuthorName,
+            AuthorEmail = Comment.AuthorEmail,
+            ContentBody = Comment.ContentBody,
+            CreatedDate = Comment.CreatedDate
+        };
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close();
+    }
+
+    private async Task Save()
+    {
+        if (_model == null) return;
+
+        _isSaving = true;
+        try
+        {
+            var updated = await CommentService.UpdateAsync(_model);
+            DialogService.Close(updated);
+        }
+        catch (Exception ex)
+        {
+            await DialogService.Alert(ex.Message, "Error", new AlertOptions { OkButtonText = "OK" });
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}

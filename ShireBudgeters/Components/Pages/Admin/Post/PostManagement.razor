@@ -79,6 +79,11 @@
                                 Published: @post.PublicationDate.ToString("g")
                             </RadzenText>
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-2">
+                                <RadzenButton Icon="comment"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => HandleComments(post))"
+                                              Title="Comments" />
                                 <RadzenButton Icon="edit"
                                               ButtonStyle="ButtonStyle.Light"
                                               Size="ButtonSize.Small"
@@ -241,6 +246,22 @@
 
         _filteredPosts = query.ToList();
         StateHasChanged();
+    }
+
+    private async Task HandleComments(PostDTO post)
+    {
+        await DialogService.OpenAsync<PostCommentsDialog>($"Comments: {post.Title}",
+            new Dictionary<string, object?>
+            {
+                { "PostId", post.Id },
+                { "PostTitle", post.Title }
+            },
+            new DialogOptions
+            {
+                Width = "800px",
+                Resizable = true,
+                Draggable = true
+            });
     }
 
     private async Task HandleEdit(PostDTO post)

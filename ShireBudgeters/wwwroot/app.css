@@ -500,66 +500,6 @@
     text-decoration: underline;
 }
 
-.post-view-comments {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--rz-base-200, #eee);
-}
-
-.post-view-comments-title {
-    margin-bottom: 1rem;
-    display: block;
-}
-
-.post-view-comments-list {
-    list-style: none;
-    margin: 0 0 1.5rem;
-    padding: 0;
-}
-
-.post-view-comment-item {
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--rz-base-200, #eee);
-}
-
-.post-view-comment-item:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-}
-
-.post-view-comment-meta {
-    font-size: 0.875rem;
-    color: var(--rz-base-700, #555);
-    margin-bottom: 0.5rem;
-}
-
-.post-view-comment-author {
-    font-weight: 600;
-    color: var(--rz-base-900, #333);
-}
-
-.post-view-comment-date {
-    margin: 0 0.25rem;
-}
-
-.post-view-comment-body {
-    font-size: 0.9375rem;
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-
-.post-view-comments-empty {
-    margin: 0 0 1.5rem;
-    color: var(--rz-base-600, #666);
-    font-size: 0.9375rem;
-}
-
-.post-view-comments-form {
-    margin-top: 1rem;
-}
-
 .post-view-affiliate-callout {
     margin-top: 1.5rem;
 }
@@ -613,6 +553,14 @@
 
 .post-view-sidebar-link:hover {
     text-decoration: underline;
+}
+
+/* Comment form validation messages — red, underneath field */
+.comment-validation-error {
+    display: block;
+    color: #c62828;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
 }
 
 /* #endregion Post View */

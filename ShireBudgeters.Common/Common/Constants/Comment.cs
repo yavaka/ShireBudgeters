@@ -18,10 +18,6 @@ public static class Comment
     /// <summary>
     /// Maximum allowed length for content body in characters.
     /// </summary>
-    public const int ContentBodyMaxLength = 10000;
+    public const int ContentBodyMaxLength = 4000;
 
-    /// <summary>
-    /// Dangerous XSS patterns removed from comment content to prevent cross-site scripting.
-    /// </summary>
-    public static readonly string[] DangerousXssPatterns = Post.DangerousXssPatterns;
 }
