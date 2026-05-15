@@ -14,9 +14,6 @@
                         <strong>Slug:</strong> URL-friendly identifier (lowercase, alphanumeric and hyphens only)
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">
-                        <strong>Featured Image URL:</strong> Enter a relative path (e.g., /images/posts/image.jpg) or full URL (e.g., https://example.com/image.jpg)
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2">
                         <strong>Meta Description:</strong> Keep it under 160 characters for optimal SEO and social media previews
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">
@@ -117,15 +114,6 @@
                         <RadzenHtmlEditorSeparator />
                         <RadzenHtmlEditorSource />
                 </RadzenHtmlEditor>
-            </ChildContent>
-        </RadzenFormField>
-
-        <RadzenFormField Text="Featured Image URL" class="rz-col-12">
-            <ChildContent>
-                <RadzenTextBox @bind-Value="Post.FeaturedImageUrl"
-                               Placeholder="/images/posts/featured-image.jpg"
-                               MaxLength="500"
-                               class="w-100" />
             </ChildContent>
         </RadzenFormField>
 

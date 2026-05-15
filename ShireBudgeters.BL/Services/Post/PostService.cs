@@ -226,15 +226,6 @@ internal class PostService(IPostRepository postRepository, ICategoryRepository c
             postDto.ContentBody = PostValidationHelper.SanitizeContentBody(postDto.ContentBody);
         }
 
-        // Validate FeaturedImageUrl
-        if (!string.IsNullOrWhiteSpace(postDto.FeaturedImageUrl))
-        {
-            if (!PostValidationHelper.IsValidImageUrl(postDto.FeaturedImageUrl))
-            {
-                throw new ArgumentException("FeaturedImageUrl must point to an allowed domain or relative path.", nameof(postDto));
-            }
-        }
-
         // Set default values
         if (!postDto.IsPublished)
         {
@@ -338,15 +329,6 @@ internal class PostService(IPostRepository postRepository, ICategoryRepository c
         if (!string.IsNullOrWhiteSpace(postDto.ContentBody))
         {
             sanitizedContentBody = PostValidationHelper.SanitizeContentBody(postDto.ContentBody);
-        }
-
-        // Validate FeaturedImageUrl
-        if (!string.IsNullOrWhiteSpace(postDto.FeaturedImageUrl))
-        {
-            if (!PostValidationHelper.IsValidImageUrl(postDto.FeaturedImageUrl))
-            {
-                throw new ArgumentException("FeaturedImageUrl must point to an allowed domain or relative path.", nameof(postDto));
-            }
         }
 
         // Update properties

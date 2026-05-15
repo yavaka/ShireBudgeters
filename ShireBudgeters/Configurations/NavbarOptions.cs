@@ -9,6 +9,7 @@ public class NavbarOptions
     /// <summary>
     /// Ordered list of root category slugs to display in the navbar (e.g. "finance", "tech").
     /// Only active categories with matching slugs are shown; missing slugs are skipped.
+    /// When empty or omitted, the navbar lists every active root category (with a slug), ordered by name.
     /// </summary>
     public List<string> CategorySlugs { get; set; } = new();
 }

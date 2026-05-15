@@ -33,13 +33,6 @@
                 }
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(Post.FeaturedImageUrl))
-            {
-                <div class="post-preview__featured-image">
-                    <img src="@Post.FeaturedImageUrl" alt="@Post.Title" loading="lazy" onerror="this.style.display='none'" />
-                </div>
-            }
-
             @if (!string.IsNullOrWhiteSpace(Post.MetaDescription))
             {
                 <p class="post-preview__meta-description">@Post.MetaDescription</p>

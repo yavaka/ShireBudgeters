@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Radzen;
 using ShireBudgeters.BL.Configurations;
 
@@ -10,8 +11,13 @@ public static class WebAppConfigurations
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // HtmlEditor / large paste: default SignalR receive cap (~32 KB) drops the Blazor circuit.
         services.AddRazorComponents()
-            .AddInteractiveServerComponents();
+            .AddInteractiveServerComponents()
+            .AddHubOptions(options =>
+            {
+                options.MaximumReceiveMessageSize = 10 * 1024 * 1024;
+            });
 
         // Radzen
         services.AddRadzenComponents();

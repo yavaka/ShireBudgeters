@@ -80,23 +80,39 @@
 
         var options = Configuration.GetSection("Navbar").Get<NavbarOptions>();
         var slugs = options?.CategorySlugs ?? new List<string>();
-        if (slugs.Count == 0)
-            return;
 
         await using (var scope = ServiceScopeFactory.CreateAsyncScope())
         {
             var categoryService = scope.ServiceProvider.GetRequiredService<ShireBudgeters.BL.Services.Category.ICategoryService>();
             var allActive = (await categoryService.GetAllActiveAsync()).ToList();
-            var bySlug = allActive.Where(c => !string.IsNullOrWhiteSpace(c.Slug)).ToDictionary(c => c.Slug!, c => c);
+            var bySlug = allActive
+                .Where(c => !string.IsNullOrWhiteSpace(c.Slug))
+                .ToDictionary(c => c.Slug!, c => c);
+
             _navItems = new List<NavCategoryItem>();
-            foreach (var slug in slugs)
+
+            if (slugs.Count > 0)
             {
-                if (string.IsNullOrWhiteSpace(slug) || !bySlug.TryGetValue(slug.Trim(), out var cat))
-                    continue;
-                if (cat.ParentCategoryId.HasValue)
-                    continue;
-                var children = allActive.Where(c => c.ParentCategoryId == cat.Id).OrderBy(c => c.Name).ToList();
-                _navItems.Add(new NavCategoryItem(cat.Slug!, cat.Name, children.Select(c => new NavCategoryItem(c.Slug ?? "", c.Name, new List<NavCategoryItem>())).ToList()));
+                foreach (var slug in slugs)
+                {
+                    if (string.IsNullOrWhiteSpace(slug) || !bySlug.TryGetValue(slug.Trim(), out var cat))
+                        continue;
+                    if (cat.ParentCategoryId.HasValue)
+                        continue;
+                    var children = allActive.Where(c => c.ParentCategoryId == cat.Id).OrderBy(c => c.Name).ToList();
+                    _navItems.Add(new NavCategoryItem(cat.Slug!, cat.Name, children.Select(c => new NavCategoryItem(c.Slug ?? "", c.Name, new List<NavCategoryItem>())).ToList()));
+                }
+            }
+            else
+            {
+                var roots = allActive
+                    .Where(c => !c.ParentCategoryId.HasValue && !string.IsNullOrWhiteSpace(c.Slug))
+                    .OrderBy(c => c.Name);
+                foreach (var cat in roots)
+                {
+                    var children = allActive.Where(c => c.ParentCategoryId == cat.Id).OrderBy(c => c.Name).ToList();
+                    _navItems.Add(new NavCategoryItem(cat.Slug!, cat.Name, children.Select(c => new NavCategoryItem(c.Slug ?? "", c.Name, new List<NavCategoryItem>())).ToList()));
+                }
             }
         }
     }
